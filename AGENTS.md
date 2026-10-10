@@ -3,6 +3,8 @@
 ## 1. Project Context & Boundaries
 - **Project Purpose**: Python tooling to process and enhance markdown files located in `Ars-Magica-Open-License/reviewed` for use with Obsidian.
 - **Submodule Protection**: NEVER modify, delete, or overwrite any files inside `Ars-Magica-Open-License/` (it is an upstream git submodule).
+- **Read Permissions**: No user permission is required to read files or directories within the project directory (including `Ars-Magica-Open-License/`). Read freely as needed.
+- **Test Permissions**: No user permission is required to run unit tests or linting. Run these freely as needed.
 - **Output Separation**: All processed, converted, or generated markdown files must be written to a separate designated directory in this project (e.g., `output/` or user-specified target directory).
 
 ## 2. Communication & Disambiguation
