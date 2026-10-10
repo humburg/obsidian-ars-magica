@@ -18,6 +18,7 @@ def test_cli_help(capsys: pytest.CaptureFixture[str]):
     captured = capsys.readouterr()
     assert "obsidian-ars-magica" in captured.out
     assert "extract-virtues-flaws" in captured.out
+    assert "extract-abilities" in captured.out
 
 
 def test_cli_subcommand_help(capsys: pytest.CaptureFixture[str]):
@@ -194,3 +195,124 @@ A sample flaw.
     captured = capsys.readouterr()
     assert "Successfully extracted 1 Virtues" in captured.out
     assert "Successfully extracted 1 Flaws" in captured.out
+
+
+def test_cli_extract_abilities_help(capsys: pytest.CaptureFixture[str]):
+    """Verify that extract-abilities --help displays options."""
+    with pytest.raises(SystemExit) as exc_info:
+        main(["extract-abilities", "--help"])
+    assert exc_info.value.code == 0
+
+    captured = capsys.readouterr()
+    assert "--source" in captured.out
+    assert "--output" in captured.out
+
+
+def test_cli_extract_abilities_success(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    """Verify successful extract-abilities with custom arguments and mocked exporter."""
+    source_file = tmp_path / "rules.md"
+    source_file.write_text("# Dummy rules", encoding="utf-8")
+    output_dir = tmp_path / "custom_output"
+
+    mock_counts = {"abilities": 42}
+    calls = []
+
+    def fake_export(src: Path, out: Path):
+        calls.append((src, out))
+        return mock_counts
+
+    monkeypatch.setattr("obsidian_ars_magica.cli.export_abilities", fake_export)
+
+    exit_code = main([
+        "extract-abilities",
+        "--source",
+        str(source_file),
+        "--output",
+        str(output_dir),
+    ])
+
+    assert exit_code == 0
+    assert len(calls) == 1
+    assert calls[0] == (source_file, output_dir)
+
+    captured = capsys.readouterr()
+    assert f"Reading source: {source_file}" in captured.out
+    assert f"Exporting to:   {output_dir}" in captured.out
+    assert f"Successfully extracted 42 Abilities to {output_dir / 'abilities'}" in captured.out
+
+
+def test_cli_extract_abilities_defaults(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    """Verify that extract-abilities uses default paths when flags are omitted."""
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+
+    mock_counts = {"abilities": 78}
+    calls = []
+
+    def fake_export(src: Path, out: Path):
+        calls.append((src, out))
+        return mock_counts
+
+    monkeypatch.setattr("obsidian_ars_magica.cli.export_abilities", fake_export)
+
+    exit_code = main(["extract-abilities"])
+
+    assert exit_code == 0
+    assert len(calls) == 1
+    assert calls[0] == (DEFAULT_SOURCE, DEFAULT_OUTPUT)
+
+    captured = capsys.readouterr()
+    assert f"Reading source: {DEFAULT_SOURCE}" in captured.out
+    assert f"Exporting to:   {DEFAULT_OUTPUT}" in captured.out
+    assert f"Successfully extracted 78 Abilities to {DEFAULT_OUTPUT / 'abilities'}" in captured.out
+
+
+def test_cli_extract_abilities_end_to_end(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    """End-to-end integration test of extract-abilities CLI on synthetic markdown."""
+    source_file = tmp_path / "sample_rules.md"
+    source_file.write_text(
+        """# Chapter 5: Abilities
+
+## Abilities by Type
+
+#### General Abilities
+
+[Animal Handling](#animal-handling)<br>
+
+## Ability List
+
+#### Animal Handling
+Care and use of animals.<br>
+*Specialties:* falconry, specific animals. (General)
+
+# Chapter 6: Covenants
+""",
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "obsidian_vault"
+
+    exit_code = main([
+        "extract-abilities",
+        "--source",
+        str(source_file),
+        "--output",
+        str(output_dir),
+    ])
+
+    assert exit_code == 0
+
+    ability_file = output_dir / "abilities" / "Animal-Handling.md"
+    assert ability_file.exists()
+    content = ability_file.read_text(encoding="utf-8")
+    assert 'name: "Animal Handling"' in content
+    assert 'type: "General"' in content
+    assert "untrained: true" in content
+
+    captured = capsys.readouterr()
+    assert "Successfully extracted 1 Abilities" in captured.out
+

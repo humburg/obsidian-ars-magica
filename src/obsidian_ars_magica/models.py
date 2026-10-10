@@ -54,3 +54,39 @@ class VirtueFlawEntry:
 
         # De-duplicate while preserving insertion order
         return list(dict.fromkeys(raw_tags))
+
+
+@dataclass
+class AbilityEntry:
+    """Represents a single parsed Ability."""
+
+    name: str
+    ability_type: str  # e.g., "General", "Academic", "Arcane", "Martial", "Supernatural"
+    specialties: list[str] = field(default_factory=list)
+    untrained: bool = True
+    category: str = "Ability"
+    body: str = ""
+    source_line: int = 0
+
+    @property
+    def filename(self) -> str:
+        """Sanitized file name with spaces and problematic characters replaced by hyphens."""
+        clean = re.sub(r"[^\w]+", "-", self.name, flags=re.UNICODE).strip("-")
+        return f"{clean}.md"
+
+    @property
+    def aliases(self) -> list[str]:
+        """List of aliases for Obsidian wikilink and AI resolution."""
+        aliases_list = [self.name]
+        if self.name == "Chirurgy":
+            aliases_list.append("Chirurgy (kie-RUHR-gee)")
+        return aliases_list
+
+    @property
+    def tags(self) -> list[str]:
+        """Generate normalized tags for Obsidian tag filtering and AI queries."""
+        raw_tags = [self.category.lower()]
+        norm_type = re.sub(r"[^\w]+", "-", self.ability_type.lower(), flags=re.UNICODE).strip("-")
+        if norm_type:
+            raw_tags.append(norm_type)
+        return list(dict.fromkeys(raw_tags))
