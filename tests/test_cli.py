@@ -19,6 +19,8 @@ def test_cli_help(capsys: pytest.CaptureFixture[str]):
     assert "obsidian-ars-magica" in captured.out
     assert "extract-virtues-flaws" in captured.out
     assert "extract-abilities" in captured.out
+    assert "extract-spells" in captured.out
+    assert "extract-guidelines" in captured.out
 
 
 def test_cli_subcommand_help(capsys: pytest.CaptureFixture[str]):
@@ -315,4 +317,97 @@ Care and use of animals.<br>
 
     captured = capsys.readouterr()
     assert "Successfully extracted 1 Abilities" in captured.out
+
+
+def test_cli_extract_spells_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    source_file = tmp_path / "mock_core_rules.md"
+    source_file.write_text(
+        """# Chapter 9: Spells
+
+## Animal Spells
+
+### Creo Animal Guidelines
+
+| Level | Creo Animal Guideline |
+| ----- | --------------------- |
+| 15 | • Heal a Light Wound |
+
+### Creo Animal Spells
+
+#### LEVEL 20
+
+##### Soothe Pains of the Beast
+R: Touch, D: Mom, T: Ind, Ritual<br>
+The spell cures one Light Wound suffered by the animal.<br>
+(Base level 15, +1 Touch)
+
+# Chapter 10: Long Term Events
+""",
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "obsidian_vault"
+
+    exit_code = main([
+        "extract-spells",
+        "--source",
+        str(source_file),
+        "--output",
+        str(output_dir),
+    ])
+
+    assert exit_code == 0
+    spell_file = output_dir / "spells" / "Soothe-Pains-of-the-Beast.md"
+    assert spell_file.exists()
+    content = spell_file.read_text(encoding="utf-8")
+    assert 'name: "Soothe Pains of the Beast"' in content
+    assert "ritual: true" in content
+    assert "> [!metadata] **CrAn 20** | **Ritual**" in content
+
+    captured = capsys.readouterr()
+    assert "Successfully extracted 1 Spells" in captured.out
+
+
+def test_cli_extract_guidelines_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    source_file = tmp_path / "mock_core_rules.md"
+    source_file.write_text(
+        """# Chapter 9: Spells
+
+## Animal Spells
+
+### Creo Animal Guidelines
+
+Rules for Creo Animal.
+
+| Level | Creo Animal Guideline |
+| ----- | --------------------- |
+| 1 | • Give an animal a +1 bonus |
+| 5 | • Create an insect |
+
+### Creo Animal Spells
+
+# Chapter 10: Long Term Events
+""",
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "obsidian_vault"
+
+    exit_code = main([
+        "extract-guidelines",
+        "--source",
+        str(source_file),
+        "--output",
+        str(output_dir),
+    ])
+
+    assert exit_code == 0
+    gl_file = output_dir / "guidelines" / "Creo-Animal-Guidelines.md"
+    assert gl_file.exists()
+    content = gl_file.read_text(encoding="utf-8")
+    assert 'name: "Creo Animal Guidelines"' in content
+    assert "### Level 1" in content
+    assert "- Give an animal a +1 bonus ^cran-1-1" in content
+
+    captured = capsys.readouterr()
+    assert "Successfully extracted 1 Guideline sections" in captured.out
+
 
