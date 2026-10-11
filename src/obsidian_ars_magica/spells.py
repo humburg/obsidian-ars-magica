@@ -80,6 +80,23 @@ def yaml_quote(value: str) -> str:
     return f'"{escaped}"'
 
 
+def clean_ocr_errors(text: str) -> str:
+    """Normalize known OCR typos in Ars Magica spell texts.
+
+    Specifically:
+    - Normalizes 'Eve' (OCR error for 'Eye' Range) to 'Eye'.
+    - Normalizes missing spaces in signed numbers and keywords (e.g. '+1Touch' -> '+1 Touch').
+    """
+    cleaned = re.sub(r"\bEve\b", "Eye", text)
+    cleaned = re.sub(
+        r"([+-]\d+)(Touch|Eye|Voice|Sight|Arc|Mom|Conc|Diam|Sun|Ring|Moon|Year|Ind|Part|Group|Room|Struct|Bound)\b",
+        r"\1 \2",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned
+
+
 def parse_rdt_line(
     raw_rdt_line: str,
 ) -> tuple[str, int, str, int, str, int, bool]:
@@ -88,10 +105,12 @@ def parse_rdt_line(
     Returns:
         (range_name, range_mag, duration_name, duration_mag, target_name, target_mag, is_ritual)
     """
-    cleaned = re.sub(r"<\s*br\s*/?\s*>", "", raw_rdt_line).strip().rstrip(".")
+    cleaned = clean_ocr_errors(raw_rdt_line)
+    cleaned = re.sub(r"<\s*br\s*/?\s*>", "", cleaned).strip().rstrip(".")
     # Standardize delimiters before D: and T:
     cleaned = re.sub(r"[\s\.,;]+D:\s*", ", D: ", cleaned)
     cleaned = re.sub(r"[\s\.,;]+T:\s*", ", T: ", cleaned)
+
 
     parts = [p.strip() for p in cleaned.split(",") if p.strip()]
     r_val, d_val, t_val = "", "", ""
@@ -155,6 +174,8 @@ def calculate_magnitudes_and_base(
     Returns:
         (base_level, additional_magnitudes, additional_modifiers, raw_design_string)
     """
+    body_text = clean_ocr_errors(body_text)
+
     # 1. Search for parenthetical design at end of description
     calc_match = re.findall(
         r"\((?:Base|Base level|Base effect|Base spell|As ward|Special spell|Unique spell|Mercurian Ritual)[^)]*\)",
@@ -207,6 +228,7 @@ def calculate_magnitudes_and_base(
                 for k in [
                     "touch",
                     "eye",
+                    "eve",
                     "voice",
                     "sight",
                     "arc",
@@ -226,6 +248,7 @@ def calculate_magnitudes_and_base(
                 ]
             ):
                 add_modifiers.append(cleaned_m)
+
 
     return base_level, add_mag, add_modifiers, raw_design
 
@@ -288,9 +311,10 @@ def extract_spells(source_path: Path | str) -> list[SpellEntry]:
 
         entry_lines: list[str] = []
         for l in lines[start_line + 1 : next_start]:
-            if l.startswith("### ") or l.startswith("## ") or l.startswith("#### "):
+            if l.startswith(("### ", "## ", "#### ")):
                 break
             entry_lines.append(l)
+
 
         # First non-empty line is RDT
         non_empty_indices = [
@@ -300,7 +324,7 @@ def extract_spells(source_path: Path | str) -> list[SpellEntry]:
             continue
 
         rdt_line_idx = non_empty_indices[0]
-        raw_rdt = entry_lines[rdt_line_idx].strip()
+        raw_rdt = clean_ocr_errors(entry_lines[rdt_line_idx].strip())
         r_name, r_mag, d_name, d_mag, t_name, t_mag, is_ritual = parse_rdt_line(
             raw_rdt
         )
@@ -317,7 +341,8 @@ def extract_spells(source_path: Path | str) -> list[SpellEntry]:
                 tech_reqs, form_reqs = parse_requisites_line(candidate_req)
                 body_start_idx = second_idx + 1
 
-        raw_body = "\n".join(entry_lines[body_start_idx:]).strip()
+        raw_body = clean_ocr_errors("\n".join(entry_lines[body_start_idx:]).strip())
+
 
         base_level, add_mag, add_mods, raw_design = calculate_magnitudes_and_base(
             raw_body,
@@ -578,10 +603,10 @@ def format_spell_markdown(spell: SpellEntry) -> str:
         breakdown_parts.append(f"+{spell.duration_magnitude} {spell.duration}")
     if spell.target_magnitude:
         breakdown_parts.append(f"+{spell.target_magnitude} {spell.target}")
-    for mod in spell.additional_modifiers:
-        breakdown_parts.append(mod)
+    breakdown_parts.extend(spell.additional_modifiers)
 
     breakdown_str = f" ({', '.join(breakdown_parts)})" if breakdown_parts else ""
+
 
     callout = (
         f"> [!metadata] **{spell.arts_shorthand} {level_disp}**{ritual_badge}\n"

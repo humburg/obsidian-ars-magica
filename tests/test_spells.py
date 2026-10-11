@@ -66,6 +66,31 @@ def test_parse_rdt_line_typo_eve_for_eye():
     assert not ritual
 
 
+def test_ocr_eve_typo_consistently_fixed():
+    """Verify that 'Eve' OCR typo is normalized to 'Eye' across RDT, body, design notes, and exported markdown."""
+    spells = extract_spells(CORE_RULES_PATH)
+    aura = next(s for s in spells if s.name == "Aura of Rightful Authority")
+    perception = next(s for s in spells if s.name == "Perception of the Conflicting Motives")
+
+    assert aura.range == "Eye"
+    assert perception.range == "Eye"
+
+    # Phantom '+1 Eve' must not be in additional_modifiers
+    assert "+1 Eve" not in aura.additional_modifiers
+    assert "+1 Eve" not in perception.additional_modifiers
+
+    # Formatted markdown must not contain 'Eve'
+    aura_md = format_spell_markdown(aura)
+    perception_md = format_spell_markdown(perception)
+    assert "Eve" not in aura_md
+    assert "Eve" not in perception_md
+
+    # The design formulas in body must display 'Eye'
+    assert "(Base 5, +1 Eye, +2 Sun)" in aura_md
+    assert "(Base 10, +1 Eye)" in perception_md
+
+
+
 def test_parse_rdt_line_punctuation_anomalies():
     # Missing comma before D: or T:
     r, r_mag, d, d_mag, t, t_mag, ritual = parse_rdt_line(
