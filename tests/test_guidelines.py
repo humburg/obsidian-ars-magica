@@ -66,8 +66,8 @@ def test_format_guideline_markdown():
     assert "```base" in md
     assert 'file.inFolder("spells")' in md
     assert "'technique == \"Creo\"'" in md
-    assert "'form == \"Animal\"'" in md
-    assert "file.name:\n    displayName: Spell" in md
+    assert "name:\n    displayName: Spell" in md
+    assert "file.name" not in md
     assert "```dataview" not in md
 
 

@@ -20,8 +20,9 @@ def test_format_guideline_bases_block():
     assert "'technique == \"Creo\"'" in block
     assert "'form == \"Ignem\"'" in block
 
-    # Properties & First column category name
-    assert "file.name:\n    displayName: Spell" in block
+    # Properties & First column category name using note name property
+    assert "name:\n    displayName: Spell" in block
+    assert "file.name" not in block
     assert "level:\n    displayName: Level" in block
     assert "range:\n    displayName: R" in block
     assert "duration:\n    displayName: D" in block
@@ -31,7 +32,7 @@ def test_format_guideline_bases_block():
     # Views
     assert 'name: "Known Spells"' in block
     assert "type: table" in block
-    assert "- file.name" in block
+    assert "- name" in block
     assert "column: level" in block
     assert "direction: ASC" in block
 
@@ -40,8 +41,9 @@ def test_generate_spells_base():
     content = generate_spells_base()
     assert 'file.inFolder("spells")' in content
 
-    # First column category name
-    assert "file.name:\n    displayName: Spell" in content
+    # First column category name using note name property
+    assert "name:\n    displayName: Spell" in content
+    assert "file.name" not in content
     assert "technique:\n    displayName: Technique" in content
     assert "form:\n    displayName: Form" in content
     assert "level:\n    displayName: Level" in content
@@ -52,36 +54,50 @@ def test_generate_spells_base():
     assert 'name: "Ritual Spells"' in content
     assert "groupBy:\n      property: arts" in content
     assert "'ritual == true'" in content
+    assert "column: name" in content
 
 
 def test_generate_virtues_base():
     content = generate_virtues_base()
     assert 'file.inFolder("virtues")' in content
-    assert "file.name:\n    displayName: Virtue" in content
+    assert "name:\n    displayName: Virtue" in content
+    assert "file.name" not in content
     assert "cost:\n    displayName: Cost" in content
+    assert "type:\n    displayName: Type" in content
+    assert "- type" in content
+    assert "types:" not in content
+    assert "- types" not in content
     assert 'name: "All Virtues"' in content
     assert 'name: "By Cost"' in content
     assert "groupBy:\n      property: cost" in content
+    assert "column: name" in content
 
 
 def test_generate_flaws_base():
     content = generate_flaws_base()
     assert 'file.inFolder("flaws")' in content
-    assert "file.name:\n    displayName: Flaw" in content
+    assert "name:\n    displayName: Flaw" in content
+    assert "file.name" not in content
     assert "cost:\n    displayName: Cost" in content
+    assert "type:\n    displayName: Type" in content
+    assert "- type" in content
+    assert "types:" not in content
+    assert "- types" not in content
     assert 'name: "All Flaws"' in content
     assert 'name: "By Cost"' in content
     assert "groupBy:\n      property: cost" in content
+    assert "column: name" in content
 
 
 def test_generate_abilities_base():
     content = generate_abilities_base()
     assert 'file.inFolder("abilities")' in content
-    assert "file.name:\n    displayName: Ability" in content
+    assert "name:\n    displayName: Ability" in content
+    assert "file.name" not in content
     assert "type:\n    displayName: Type" in content
     assert "untrained:\n    displayName: Untrained" in content
     assert "specialties:\n    displayName: Specialties" in content
     assert 'name: "All Abilities"' in content
     assert 'name: "By Type"' in content
     assert "groupBy:\n      property: type" in content
-
+    assert "column: name" in content

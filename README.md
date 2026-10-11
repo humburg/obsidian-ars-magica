@@ -287,7 +287,7 @@ filters:
     - 'technique == "Creo"'
     - 'form == "Ignem"'
 properties:
-  file.name:
+  name:
     displayName: Spell
   level:
     displayName: Level
@@ -303,7 +303,7 @@ views:
   - type: table
     name: "Known Spells"
     order:
-      - file.name
+      - name
       - level
       - range
       - duration

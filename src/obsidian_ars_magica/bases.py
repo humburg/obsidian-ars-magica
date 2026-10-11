@@ -11,7 +11,7 @@ filters:
     - 'technique == "{technique}"'
     - 'form == "{form}"'
 properties:
-  file.name:
+  name:
     displayName: Spell
   level:
     displayName: Level
@@ -27,7 +27,7 @@ views:
   - type: table
     name: "Known Spells"
     order:
-      - file.name
+      - name
       - level
       - range
       - duration
@@ -45,7 +45,7 @@ def generate_spells_base() -> str:
   and:
     - file.inFolder("spells")
 properties:
-  file.name:
+  name:
     displayName: Spell
   technique:
     displayName: Technique
@@ -69,7 +69,7 @@ views:
   - type: table
     name: "All Spells"
     order:
-      - file.name
+      - name
       - technique
       - form
       - level
@@ -78,7 +78,7 @@ views:
       - target
       - ritual
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
   - type: table
     name: "By Arts"
@@ -86,7 +86,7 @@ views:
       property: arts
       direction: ASC
     order:
-      - file.name
+      - name
       - level
       - range
       - duration
@@ -101,7 +101,7 @@ views:
       and:
         - 'ritual == true'
     order:
-      - file.name
+      - name
       - technique
       - form
       - level
@@ -120,11 +120,11 @@ def generate_virtues_base() -> str:
   and:
     - file.inFolder("virtues")
 properties:
-  file.name:
+  name:
     displayName: Virtue
   cost:
     displayName: Cost
-  types:
+  type:
     displayName: Type
   properties:
     displayName: Properties
@@ -132,12 +132,12 @@ views:
   - type: table
     name: "All Virtues"
     order:
-      - file.name
+      - name
       - cost
-      - types
+      - type
       - properties
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
   - type: table
     name: "By Cost"
@@ -145,11 +145,11 @@ views:
       property: cost
       direction: ASC
     order:
-      - file.name
-      - types
+      - name
+      - type
       - properties
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
 """
 
@@ -160,11 +160,11 @@ def generate_flaws_base() -> str:
   and:
     - file.inFolder("flaws")
 properties:
-  file.name:
+  name:
     displayName: Flaw
   cost:
     displayName: Cost
-  types:
+  type:
     displayName: Type
   properties:
     displayName: Properties
@@ -172,12 +172,12 @@ views:
   - type: table
     name: "All Flaws"
     order:
-      - file.name
+      - name
       - cost
-      - types
+      - type
       - properties
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
   - type: table
     name: "By Cost"
@@ -185,11 +185,11 @@ views:
       property: cost
       direction: ASC
     order:
-      - file.name
-      - types
+      - name
+      - type
       - properties
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
 """
 
@@ -200,7 +200,7 @@ def generate_abilities_base() -> str:
   and:
     - file.inFolder("abilities")
 properties:
-  file.name:
+  name:
     displayName: Ability
   type:
     displayName: Type
@@ -212,12 +212,12 @@ views:
   - type: table
     name: "All Abilities"
     order:
-      - file.name
+      - name
       - type
       - untrained
       - specialties
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
   - type: table
     name: "By Type"
@@ -225,11 +225,10 @@ views:
       property: type
       direction: ASC
     order:
-      - file.name
+      - name
       - untrained
       - specialties
     sort:
-      - column: file.name
+      - column: name
         direction: ASC
 """
-
