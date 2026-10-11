@@ -22,10 +22,11 @@ Each generated note is augmented with:
 
 ## Features & Tools
 
-The CLI provides four dedicated extraction tools:
+The CLI provides dedicated extraction tools for individual systems as well as a bulk extractor to generate the complete vault in one command:
 
 | Command | Source Content | Target Output Folder | Key Generated Features |
 | :--- | :--- | :--- | :--- |
+| `extract-all` (alias: `all`) | Chapters 4, 6, 9 | `output/` (all subfolders) | Runs all four extractors in sequence, generating Virtues, Flaws, Abilities, Spells, and Guidelines in a single pass with consolidated progress reporting. |
 | `extract-virtues-flaws` | Chapter 4: Virtues & Flaws | `output/virtues/`<br>`output/flaws/` | Categorized as Virtue or Flaw; parses costs (Minor/Major/Free), types (Hermetic, General, Social Status, etc.), and custom properties. |
 | `extract-abilities` | Chapter 6: Abilities | `output/abilities/` | Parses ability types (General, Academic, Arcane, Martial, Supernatural), specialties list, and untrained flags. |
 | `extract-spells` | Chapter 9: Spells | `output/spells/` | Parses Arts, requisites, Range, Duration, Target, Ritual flag, base level, magnitude breakdown (+R/+D/+T modifiers), and direct guideline anchor link. |
@@ -82,7 +83,7 @@ All commands accept the following optional arguments:
 - `--output <path>`: Target root directory for generated notes (default: `output`). Can be pointed directly to an existing Obsidian vault directory.
 
 ```
-usage: obsidian-ars-magica [-h] {extract-virtues-flaws,extract-abilities,extract-spells,extract-guidelines} ...
+usage: obsidian-ars-magica [-h] {extract-virtues-flaws,extract-abilities,extract-spells,extract-guidelines,extract-all} ...
 ```
 
 ---
@@ -135,23 +136,39 @@ obsidian-ars-magica extract-guidelines --output "C:/MyVault/ArsMagica"
 
 ---
 
-### Batch Extraction (Extract All)
+### Bulk Extraction (`extract-all` / `all`)
 
-To run all extraction tools in sequence and generate a complete vault, use a shell loop:
+To run all extraction tools in sequence and generate a complete vault in one go, use `extract-all` (or the short alias `all`):
 
-**PowerShell (Windows)**:
-```powershell
-@("extract-virtues-flaws", "extract-abilities", "extract-spells", "extract-guidelines") | ForEach-Object {
-    obsidian-ars-magica $_ --output "output"
-}
-```
-
-**Bash (Linux / macOS)**:
 ```bash
-for cmd in extract-virtues-flaws extract-abilities extract-spells extract-guidelines; do
-    obsidian-ars-magica "$cmd" --output "output"
-done
+obsidian-ars-magica extract-all
 ```
+
+*Custom output example:*
+```bash
+obsidian-ars-magica extract-all --output "C:/MyVault/ArsMagica"
+```
+
+*Using shorthand alias:*
+```bash
+obsidian-ars-magica all --output "C:/MyVault/ArsMagica"
+```
+
+This sequentially executes Virtues & Flaws, Abilities, Spells, and Spell Guidelines, streaming step progress and displaying a total note count upon completion.
+
+*(Alternative: You can also run individual commands in a custom shell loop if desired)*
+- **PowerShell (Windows)**:
+  ```powershell
+  @("extract-virtues-flaws", "extract-abilities", "extract-spells", "extract-guidelines") | ForEach-Object {
+      obsidian-ars-magica $_ --output "output"
+  }
+  ```
+- **Bash (Linux / macOS)**:
+  ```bash
+  for cmd in extract-virtues-flaws extract-abilities extract-spells extract-guidelines; do
+      obsidian-ars-magica "$cmd" --output "output"
+  done
+  ```
 
 ---
 

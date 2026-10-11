@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from obsidian_ars_magica.abilities import export_abilities
+from obsidian_ars_magica.bulk import export_all
 from obsidian_ars_magica.virtues_flaws import export_virtues_and_flaws
 
 DEFAULT_SOURCE = Path(
@@ -93,6 +94,25 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Target output directory (default: {DEFAULT_OUTPUT})",
     )
 
+    # Subcommand: extract-all
+    all_parser = subparsers.add_parser(
+        "extract-all",
+        aliases=["all"],
+        help="Run all extraction tools in one go to generate a complete Obsidian vault.",
+    )
+    all_parser.add_argument(
+        "--source",
+        type=Path,
+        default=DEFAULT_SOURCE,
+        help=f"Source core rules markdown file (default: {DEFAULT_SOURCE})",
+    )
+    all_parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help=f"Target output directory (default: {DEFAULT_OUTPUT})",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "extract-virtues-flaws":
@@ -162,6 +182,33 @@ def main(argv: list[str] | None = None) -> int:
         counts = export_guidelines(source_path, output_dir)
 
         print(f"Successfully extracted {counts['guidelines']} Guideline sections to {output_dir / 'guidelines'}")
+        return 0
+
+    if args.command in ("extract-all", "all"):
+        source_path = args.source
+        output_dir = args.output
+
+        if not source_path.exists():
+            print(f"Error: Source file does not exist: {source_path}", file=sys.stderr)
+            return 1
+
+        print(f"Reading source: {source_path}")
+        print(f"Exporting to:   {output_dir}")
+
+        def progress(stage: str, counts: dict[str, int]) -> None:
+            if stage == "virtues_flaws":
+                print(f"Successfully extracted {counts['virtues']} Virtues to {output_dir / 'virtues'}")
+                print(f"Successfully extracted {counts['flaws']} Flaws to {output_dir / 'flaws'}")
+            elif stage == "abilities":
+                print(f"Successfully extracted {counts['abilities']} Abilities to {output_dir / 'abilities'}")
+            elif stage == "spells":
+                print(f"Successfully extracted {counts['spells']} Spells to {output_dir / 'spells'}")
+            elif stage == "guidelines":
+                print(f"Successfully extracted {counts['guidelines']} Guideline sections to {output_dir / 'guidelines'}")
+
+        counts = export_all(source_path, output_dir, progress_callback=progress)
+
+        print(f"Bulk extraction complete: {counts['total']} total notes generated.")
         return 0
 
     return 0

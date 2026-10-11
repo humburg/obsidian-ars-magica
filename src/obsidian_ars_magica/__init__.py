@@ -7,6 +7,7 @@ from obsidian_ars_magica.abilities import (
     format_ability_markdown,
     split_specialties,
 )
+from obsidian_ars_magica.bulk import export_all
 from obsidian_ars_magica.models import (
     AbilityEntry,
     GuidelineLevelEntry,
@@ -41,6 +42,7 @@ __all__ = [
     "SpellEntry",
     "VirtueFlawEntry",
     "export_abilities",
+    "export_all",
     "export_guidelines",
     "export_spells",
     "export_virtues_and_flaws",
