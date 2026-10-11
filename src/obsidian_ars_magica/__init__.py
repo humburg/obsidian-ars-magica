@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Package initialization for obsidian_ars_magica."""
 
 from obsidian_ars_magica.abilities import (

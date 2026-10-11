@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Command-line interface for obsidian-ars-magica tooling."""
 
 import argparse

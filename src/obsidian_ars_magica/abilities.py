@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Extractor and formatter for Ars Magica Abilities."""
 
 import re

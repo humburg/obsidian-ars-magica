@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Unit and integration tests for Spells extraction, calculation, and export."""
 
 from pathlib import Path

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Unit and integration tests for the command-line interface."""
 
 import runpy

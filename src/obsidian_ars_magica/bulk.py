@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Bulk extraction pipeline for obsidian-ars-magica."""
 
 from collections.abc import Callable

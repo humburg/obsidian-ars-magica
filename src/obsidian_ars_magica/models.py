@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Data models representing Ars Magica content items."""
 
 import re

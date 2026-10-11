@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Basic smoke test to ensure environment and package are correctly configured."""
 
 import obsidian_ars_magica

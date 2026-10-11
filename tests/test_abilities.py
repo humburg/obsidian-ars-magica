@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Unit and integration tests for Abilities extraction and export."""
 
 from pathlib import Path

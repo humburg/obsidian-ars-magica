@@ -339,6 +339,6 @@ ruff check src tests
 
 ## License & Attribution
 
-- **Tooling**: Licensed under the project's repository license.
-- **Rules Content**: *Ars Magica 5th Edition Definitive Edition* text is provided by Atlas Games under the [Ars Magica Open License](https://atlas-games.com/open-license).
+- **Tooling Code**: Licensed under the [MIT License](LICENSE).
+- **Rules Content**: *Ars Magica 5th Edition Definitive Edition* text is provided by Trident, Inc. d/b/a Atlas Games under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/) license (see the [Ars Magica Open License](https://atlas-games.com/open-license)).
 - **Submodule Protection**: Do not modify files in the `Ars-Magica-Open-License/` directory directly, as it tracks the upstream open license repository.
