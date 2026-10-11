@@ -4,6 +4,10 @@
 import re
 from pathlib import Path
 
+from obsidian_ars_magica.bases import (
+    format_guideline_bases_block,
+    generate_spells_base,
+)
 from obsidian_ars_magica.models import (
     GuidelineLevelEntry,
     GuidelineSection,
@@ -662,15 +666,11 @@ def format_guideline_markdown(section: GuidelineSection) -> str:
             lines.append(f"- {bullet} {block_id}")
         lines.append("")
 
-    # Dataview query section
+    # Obsidian Bases view section
     lines.append("---")
     lines.append("\n## Known Spells\n")
-    lines.append("```dataview")
-    lines.append('TABLE level as "Level", range as "R", duration as "D", target as "T", ritual as "Ritual"')
-    lines.append('FROM "spells"')
-    lines.append(f'WHERE technique = "{section.technique}" AND form = "{section.form}"')
-    lines.append("SORT level ASC")
-    lines.append("```\n")
+    lines.append(format_guideline_bases_block(section.technique, section.form))
+    lines.append("")
 
     return "\n".join(lines)
 
@@ -692,6 +692,10 @@ def export_spells(
         file_path = spells_dir / spell.filename
         content = format_spell_markdown(spell)
         file_path.write_text(content, encoding="utf-8")
+
+    # Generate standalone spells.base database file
+    spells_base_path = target_root / "spells.base"
+    spells_base_path.write_text(generate_spells_base(), encoding="utf-8")
 
     return {"spells": len(spells)}
 

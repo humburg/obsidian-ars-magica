@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from obsidian_ars_magica.bases import generate_flaws_base, generate_virtues_base
 from obsidian_ars_magica.models import VirtueFlawEntry
 
 KNOWN_COSTS = [
@@ -272,6 +273,13 @@ def export_virtues_and_flaws(
         file_path = flaws_dir / f.filename
         content = format_entry_markdown(f)
         file_path.write_text(content, encoding="utf-8")
+
+    # Generate standalone virtues.base and flaws.base database files
+    virtues_base_path = target_root / "virtues.base"
+    virtues_base_path.write_text(generate_virtues_base(), encoding="utf-8")
+
+    flaws_base_path = target_root / "flaws.base"
+    flaws_base_path.write_text(generate_flaws_base(), encoding="utf-8")
 
     return {
         "virtues": len(virtues),

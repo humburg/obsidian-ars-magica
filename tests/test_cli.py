@@ -195,10 +195,13 @@ A sample flaw.
     flaw_file = output_dir / "flaws" / "Sample-Flaw.md"
     assert virtue_file.exists()
     assert flaw_file.exists()
+    assert (output_dir / "virtues.base").exists()
+    assert (output_dir / "flaws.base").exists()
 
     captured = capsys.readouterr()
     assert "Successfully extracted 1 Virtues" in captured.out
     assert "Successfully extracted 1 Flaws" in captured.out
+    assert "Generated Base databases:" in captured.out
 
 
 def test_cli_extract_abilities_help(capsys: pytest.CaptureFixture[str]):
@@ -316,9 +319,11 @@ Care and use of animals.<br>
     assert 'name: "Animal Handling"' in content
     assert 'type: "General"' in content
     assert "untrained: true" in content
+    assert (output_dir / "abilities.base").exists()
 
     captured = capsys.readouterr()
     assert "Successfully extracted 1 Abilities" in captured.out
+    assert "Generated Base database:" in captured.out
 
 
 def test_cli_extract_spells_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
@@ -364,9 +369,11 @@ The spell cures one Light Wound suffered by the animal.<br>
     assert 'name: "Soothe Pains of the Beast"' in content
     assert "ritual: true" in content
     assert "> [!metadata] **CrAn 20** | **Ritual**" in content
+    assert (output_dir / "spells.base").exists()
 
     captured = capsys.readouterr()
     assert "Successfully extracted 1 Spells" in captured.out
+    assert "Generated Base database:" in captured.out
 
 
 def test_cli_extract_guidelines_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
@@ -408,6 +415,9 @@ Rules for Creo Animal.
     assert 'name: "Creo Animal Guidelines"' in content
     assert "### Level 1" in content
     assert "- Give an animal a +1 bonus ^cran-1-1" in content
+    assert "```base" in content
+    assert "```dataview" not in content
+    assert not (output_dir / "guidelines.base").exists()
 
     captured = capsys.readouterr()
     assert "Successfully extracted 1 Guideline sections" in captured.out
@@ -478,6 +488,9 @@ def test_cli_extract_all_success(
     assert f"Successfully extracted 25 Abilities to {output_dir / 'abilities'}" in captured.out
     assert f"Successfully extracted 50 Spells to {output_dir / 'spells'}" in captured.out
     assert f"Successfully extracted 5 Guideline sections to {output_dir / 'guidelines'}" in captured.out
+    assert f"Generated Base databases: {output_dir / 'virtues.base'}, {output_dir / 'flaws.base'}" in captured.out
+    assert f"Generated Base database:  {output_dir / 'abilities.base'}" in captured.out
+    assert f"Generated Base database:  {output_dir / 'spells.base'}" in captured.out
     assert "Bulk extraction complete: 105 total notes generated." in captured.out
 
 

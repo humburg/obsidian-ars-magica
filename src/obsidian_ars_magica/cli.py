@@ -26,7 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     # Subcommand: extract-virtues-flaws
     vf_parser = subparsers.add_parser(
         "extract-virtues-flaws",
-        help="Extract Virtues and Flaws into separate notes with YAML frontmatter.",
+        help="Extract Virtues and Flaws into separate notes and generate virtues.base and flaws.base.",
     )
     vf_parser.add_argument(
         "--source",
@@ -44,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     # Subcommand: extract-abilities
     ab_parser = subparsers.add_parser(
         "extract-abilities",
-        help="Extract Abilities into separate notes with YAML frontmatter.",
+        help="Extract Abilities into separate notes and generate abilities.base.",
     )
     ab_parser.add_argument(
         "--source",
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     # Subcommand: extract-spells
     sp_parser = subparsers.add_parser(
         "extract-spells",
-        help="Extract Spells into separate notes with YAML frontmatter.",
+        help="Extract Spells into separate notes and generate spells.base.",
     )
     sp_parser.add_argument(
         "--source",
@@ -80,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     # Subcommand: extract-guidelines
     gl_parser = subparsers.add_parser(
         "extract-guidelines",
-        help="Extract Spell Guidelines into 50 Technique+Form notes with YAML frontmatter.",
+        help="Extract Spell Guidelines into 50 Technique+Form notes with embedded Bases views.",
     )
     gl_parser.add_argument(
         "--source",
@@ -131,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
 
         print(f"Successfully extracted {counts['virtues']} Virtues to {output_dir / 'virtues'}")
         print(f"Successfully extracted {counts['flaws']} Flaws to {output_dir / 'flaws'}")
+        print(f"Generated Base databases: {output_dir / 'virtues.base'}, {output_dir / 'flaws.base'}")
         return 0
 
     if args.command == "extract-abilities":
@@ -147,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         counts = export_abilities(source_path, output_dir)
 
         print(f"Successfully extracted {counts['abilities']} Abilities to {output_dir / 'abilities'}")
+        print(f"Generated Base database:  {output_dir / 'abilities.base'}")
         return 0
 
     if args.command == "extract-spells":
@@ -165,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
         counts = export_spells(source_path, output_dir)
 
         print(f"Successfully extracted {counts['spells']} Spells to {output_dir / 'spells'}")
+        print(f"Generated Base database:  {output_dir / 'spells.base'}")
         return 0
 
     if args.command == "extract-guidelines":
@@ -200,10 +203,13 @@ def main(argv: list[str] | None = None) -> int:
             if stage == "virtues_flaws":
                 print(f"Successfully extracted {counts['virtues']} Virtues to {output_dir / 'virtues'}")
                 print(f"Successfully extracted {counts['flaws']} Flaws to {output_dir / 'flaws'}")
+                print(f"Generated Base databases: {output_dir / 'virtues.base'}, {output_dir / 'flaws.base'}")
             elif stage == "abilities":
                 print(f"Successfully extracted {counts['abilities']} Abilities to {output_dir / 'abilities'}")
+                print(f"Generated Base database:  {output_dir / 'abilities.base'}")
             elif stage == "spells":
                 print(f"Successfully extracted {counts['spells']} Spells to {output_dir / 'spells'}")
+                print(f"Generated Base database:  {output_dir / 'spells.base'}")
             elif stage == "guidelines":
                 print(f"Successfully extracted {counts['guidelines']} Guideline sections to {output_dir / 'guidelines'}")
 

@@ -260,3 +260,7 @@ def test_export_virtues_and_flaws(tmp_path: Path):
     assert 'name: "Major Magical Focus"' in content
     assert "# Major Magical Focus" in content
     assert "> #### Sample Major Magical Foci" in content
+
+    # Verify standalone base files
+    assert (tmp_path / "virtues.base").exists()
+    assert (tmp_path / "flaws.base").exists()

@@ -63,7 +63,12 @@ def test_format_guideline_markdown():
     assert "### Level 5" in md
     assert "- Create an insect or similar bug ^cran-5-1" in md
     assert "## Known Spells" in md
-    assert 'WHERE technique = "Creo" AND form = "Animal"' in md
+    assert "```base" in md
+    assert 'file.inFolder("spells")' in md
+    assert "'technique == \"Creo\"'" in md
+    assert "'form == \"Animal\"'" in md
+    assert "file.name:\n    displayName: Spell" in md
+    assert "```dataview" not in md
 
 
 def test_extract_all_guidelines_from_core_rules():
@@ -97,4 +102,7 @@ def test_export_guidelines(tmp_path):
     assert (guidelines_dir / "Creo-Animal-Guidelines.md").exists()
     assert (guidelines_dir / "Rego-Vim-Guidelines.md").exists()
     assert len(list(guidelines_dir.glob("*.md"))) == 50
+
+    # Ensure standalone guidelines.base is not created per design
+    assert not (tmp_path / "guidelines.base").exists()
 

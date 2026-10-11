@@ -8,6 +8,13 @@ from obsidian_ars_magica.abilities import (
     format_ability_markdown,
     split_specialties,
 )
+from obsidian_ars_magica.bases import (
+    format_guideline_bases_block,
+    generate_abilities_base,
+    generate_flaws_base,
+    generate_spells_base,
+    generate_virtues_base,
+)
 from obsidian_ars_magica.bulk import export_all
 from obsidian_ars_magica.models import (
     AbilityEntry,
@@ -55,10 +62,15 @@ __all__ = [
     "format_ability_markdown",
     "format_entry_markdown",
     "format_frontmatter",
+    "format_guideline_bases_block",
     "format_guideline_frontmatter",
     "format_guideline_markdown",
     "format_spell_frontmatter",
     "format_spell_markdown",
+    "generate_abilities_base",
+    "generate_flaws_base",
+    "generate_spells_base",
+    "generate_virtues_base",
     "parse_qualifiers",
     "split_specialties",
 ]

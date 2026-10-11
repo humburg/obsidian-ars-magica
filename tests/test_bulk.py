@@ -177,3 +177,10 @@ def test_export_all_synthetic_end_to_end(tmp_path: Path):
     assert (output_dir / "spells" / "Beast-of-Outlandish-Size.md").exists()
     assert (output_dir / "guidelines" / "Creo-Animal-Guidelines.md").exists()
 
+    # Check generated standalone .base files
+    assert (output_dir / "spells.base").exists()
+    assert (output_dir / "virtues.base").exists()
+    assert (output_dir / "flaws.base").exists()
+    assert (output_dir / "abilities.base").exists()
+    assert not (output_dir / "guidelines.base").exists()
+

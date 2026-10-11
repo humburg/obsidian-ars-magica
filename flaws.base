@@ -1,0 +1,35 @@
+filters:
+  and:
+    - file.inFolder("flaws")
+properties:
+  file.name:
+    displayName: Flaw
+  cost:
+    displayName: Cost
+  types:
+    displayName: Type
+  properties:
+    displayName: Properties
+views:
+  - type: table
+    name: "All Flaws"
+    order:
+      - file.name
+      - cost
+      - types
+      - properties
+    sort:
+      - column: file.name
+        direction: ASC
+  - type: table
+    name: "By Cost"
+    groupBy:
+      property: cost
+      direction: ASC
+    order:
+      - file.name
+      - types
+      - properties
+    sort:
+      - column: file.name
+        direction: ASC

@@ -1,0 +1,70 @@
+filters:
+  and:
+    - file.inFolder("spells")
+properties:
+  file.name:
+    displayName: Spell
+  technique:
+    displayName: Technique
+  form:
+    displayName: Form
+  level:
+    displayName: Level
+  range:
+    displayName: R
+  duration:
+    displayName: D
+  target:
+    displayName: T
+  ritual:
+    displayName: Ritual
+  base_level:
+    displayName: Base
+  total_magnitudes:
+    displayName: Magnitudes
+views:
+  - type: table
+    name: "All Spells"
+    order:
+      - file.name
+      - technique
+      - form
+      - level
+      - range
+      - duration
+      - target
+      - ritual
+    sort:
+      - column: file.name
+        direction: ASC
+  - type: table
+    name: "By Arts"
+    groupBy:
+      property: arts
+      direction: ASC
+    order:
+      - file.name
+      - level
+      - range
+      - duration
+      - target
+      - ritual
+    sort:
+      - column: level
+        direction: ASC
+  - type: table
+    name: "Ritual Spells"
+    filters:
+      and:
+        - 'ritual == true'
+    order:
+      - file.name
+      - technique
+      - form
+      - level
+      - range
+      - duration
+      - target
+    sort:
+      - column: level
+        direction: ASC

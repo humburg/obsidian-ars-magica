@@ -1,0 +1,35 @@
+filters:
+  and:
+    - file.inFolder("abilities")
+properties:
+  file.name:
+    displayName: Ability
+  type:
+    displayName: Type
+  untrained:
+    displayName: Untrained
+  specialties:
+    displayName: Specialties
+views:
+  - type: table
+    name: "All Abilities"
+    order:
+      - file.name
+      - type
+      - untrained
+      - specialties
+    sort:
+      - column: file.name
+        direction: ASC
+  - type: table
+    name: "By Type"
+    groupBy:
+      property: type
+      direction: ASC
+    order:
+      - file.name
+      - untrained
+      - specialties
+    sort:
+      - column: file.name
+        direction: ASC

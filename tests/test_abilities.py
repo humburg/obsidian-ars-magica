@@ -257,3 +257,6 @@ def test_export_abilities(tmp_path: Path):
     assert "untrained: true" in content
     assert "# Animal Handling" in content
     assert "*Specialties:* falconry, specific animals. (General)" in content
+
+    # Verify standalone base file
+    assert (tmp_path / "abilities.base").exists()

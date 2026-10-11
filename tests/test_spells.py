@@ -254,4 +254,5 @@ def test_export_spells(tmp_path):
     assert spells_dir.exists()
     assert (spells_dir / "Soothe-Pains-of-the-Beast.md").exists()
     assert (spells_dir / "Aegis-of-the-Hearth.md").exists()
+    assert (tmp_path / "spells.base").exists()
 

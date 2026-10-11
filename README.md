@@ -16,7 +16,7 @@ Each generated note is augmented with:
 - **Wikilinks & Anchors**: Spells link directly to their corresponding Spell Guideline base levels (e.g., `[[Creo-Ignem-Guidelines#Level 5|Creo Ignem Base 5]]`).
 - **Obsidian Callouts**: Rich visual summaries formatted with metadata callouts (`> [!metadata]`).
 - **Block IDs**: Spell Guideline level bullet points include stable block IDs (e.g., `^crig-5-1`) for precise referencing.
-- **Dataview Integration**: Guideline notes include embedded [Dataview](https://blacksmithgu.github.io/obsidian-dataview/) queries that automatically list known spells belonging to that Technique and Form.
+- **Obsidian Bases Integration**: Standalone `.base` database files (`spells.base`, `virtues.base`, `flaws.base`, `abilities.base`) and embedded Bases table views (` ```base `) in Guideline notes for native, interactive querying in Obsidian (requires Obsidian v1.9+ core Bases plugin).
 
 ---
 
@@ -26,11 +26,11 @@ The CLI provides dedicated extraction tools for individual systems as well as a 
 
 | Command | Source Content | Target Output Folder | Key Generated Features |
 | :--- | :--- | :--- | :--- |
-| `extract-all` (alias: `all`) | Chapters 4, 6, 9 | `output/` (all subfolders) | Runs all four extractors in sequence, generating Virtues, Flaws, Abilities, Spells, and Guidelines in a single pass with consolidated progress reporting. |
-| `extract-virtues-flaws` | Chapter 4: Virtues & Flaws | `output/virtues/`<br>`output/flaws/` | Categorized as Virtue or Flaw; parses costs (Minor/Major/Free), types (Hermetic, General, Social Status, etc.), and custom properties. |
-| `extract-abilities` | Chapter 6: Abilities | `output/abilities/` | Parses ability types (General, Academic, Arcane, Martial, Supernatural), specialties list, and untrained flags. |
-| `extract-spells` | Chapter 9: Spells | `output/spells/` | Parses Arts, requisites, Range, Duration, Target, Ritual flag, base level, magnitude breakdown (+R/+D/+T modifiers), and direct guideline anchor link. |
-| `extract-guidelines` | Chapter 9: Spells | `output/guidelines/` | Generates 50 Technique + Form guideline notes with level headings, block IDs on individual bullets, and embedded Dataview query tables. |
+| `extract-all` (alias: `all`) | Chapters 4, 6, 9 | `output/` (all subfolders & `.base` files) | Runs all four extractors in sequence, generating Virtues, Flaws, Abilities, Spells, Guidelines, and standalone Base databases in a single pass with consolidated progress reporting. |
+| `extract-virtues-flaws` | Chapter 4: Virtues & Flaws | `output/virtues/`<br>`output/flaws/`<br>`output/virtues.base`<br>`output/flaws.base` | Categorized as Virtue or Flaw; parses costs (Minor/Major/Free), types (Hermetic, General, Social Status, etc.), and custom properties; generates standalone `virtues.base` and `flaws.base` databases. |
+| `extract-abilities` | Chapter 6: Abilities | `output/abilities/`<br>`output/abilities.base` | Parses ability types (General, Academic, Arcane, Martial, Supernatural), specialties list, and untrained flags; generates standalone `abilities.base` database. |
+| `extract-spells` | Chapter 9: Spells | `output/spells/`<br>`output/spells.base` | Parses Arts, requisites, Range, Duration, Target, Ritual flag, base level, magnitude breakdown (+R/+D/+T modifiers), and direct guideline anchor link; generates standalone `spells.base` database. |
+| `extract-guidelines` | Chapter 9: Spells | `output/guidelines/` | Generates 50 Technique + Form guideline notes with level headings, block IDs on individual bullets, and embedded Obsidian Bases query tables. |
 
 ---
 
@@ -91,7 +91,7 @@ usage: obsidian-ars-magica [-h] {extract-virtues-flaws,extract-abilities,extract
 ### Individual Commands
 
 #### 1. Extract Virtues and Flaws (`extract-virtues-flaws`)
-Extracts all Virtues and Flaws from Chapter 4 into separate files in `virtues/` and `flaws/`.
+Extracts all Virtues and Flaws from Chapter 4 into separate files in `virtues/` and `flaws/`, and generates standalone `virtues.base` and `flaws.base` databases.
 
 ```bash
 obsidian-ars-magica extract-virtues-flaws
@@ -102,7 +102,7 @@ obsidian-ars-magica extract-virtues-flaws --output "C:/MyVault/ArsMagica"
 ```
 
 #### 2. Extract Abilities (`extract-abilities`)
-Extracts all character abilities from Chapter 6 into separate files in `abilities/`.
+Extracts all character abilities from Chapter 6 into separate files in `abilities/`, and generates a standalone `abilities.base` database.
 
 ```bash
 obsidian-ars-magica extract-abilities
@@ -113,7 +113,7 @@ obsidian-ars-magica extract-abilities --output "C:/MyVault/ArsMagica"
 ```
 
 #### 3. Extract Spells (`extract-spells`)
-Extracts all Hermetic spells from Chapter 9 into separate files in `spells/`. Computes magnitude calculations, canonical R/D/T parameters, requisites, and cross-links to guideline notes.
+Extracts all Hermetic spells from Chapter 9 into separate files in `spells/`, and generates a standalone `spells.base` database. Computes magnitude calculations, canonical R/D/T parameters, requisites, and cross-links to guideline notes.
 
 ```bash
 obsidian-ars-magica extract-spells
@@ -124,7 +124,7 @@ obsidian-ars-magica extract-spells --output "C:/MyVault/ArsMagica"
 ```
 
 #### 4. Extract Spell Guidelines (`extract-guidelines`)
-Extracts all 50 Hermetic Technique + Form guideline sections (5 Techniques &times; 10 Forms) into individual notes under `guidelines/`. Each note contains level subsections with block IDs and an embedded Dataview table.
+Extracts all 50 Hermetic Technique + Form guideline sections (5 Techniques &times; 10 Forms) into individual notes under `guidelines/`. Each note contains level subsections with block IDs and an embedded Obsidian Bases query table.
 
 ```bash
 obsidian-ars-magica extract-guidelines
@@ -280,11 +280,38 @@ tags:
 
 ## Known Spells
 
-```dataview
-TABLE level as "Level", range as "R", duration as "D", target as "T", ritual as "Ritual"
-FROM "spells"
-WHERE technique = "Creo" AND form = "Ignem"
-SORT level ASC
+```base
+filters:
+  and:
+    - file.inFolder("spells")
+    - 'technique == "Creo"'
+    - 'form == "Ignem"'
+properties:
+  file.name:
+    displayName: Spell
+  level:
+    displayName: Level
+  range:
+    displayName: R
+  duration:
+    displayName: D
+  target:
+    displayName: T
+  ritual:
+    displayName: Ritual
+views:
+  - type: table
+    name: "Known Spells"
+    order:
+      - file.name
+      - level
+      - range
+      - duration
+      - target
+      - ritual
+    sort:
+      - column: level
+        direction: ASC
 ```
 ````
 

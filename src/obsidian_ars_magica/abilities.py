@@ -4,6 +4,7 @@
 import re
 from pathlib import Path
 
+from obsidian_ars_magica.bases import generate_abilities_base
 from obsidian_ars_magica.models import AbilityEntry
 
 
@@ -276,6 +277,10 @@ def export_abilities(
         file_path = abilities_dir / a.filename
         content = format_ability_markdown(a)
         file_path.write_text(content, encoding="utf-8")
+
+    # Generate standalone abilities.base database file
+    abilities_base_path = target_root / "abilities.base"
+    abilities_base_path.write_text(generate_abilities_base(), encoding="utf-8")
 
     return {
         "abilities": len(abilities),
