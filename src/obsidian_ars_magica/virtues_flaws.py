@@ -69,10 +69,8 @@ def parse_qualifiers(raw_line: str) -> dict[str, Any]:
                 cost = "Minor"
             elif low == "major":
                 cost = "Major"
-            elif low == "minor or major":
+            elif low in ("minor or major", "major or minor"):
                 cost = "Minor or Major"
-            elif low == "major or minor":
-                cost = "Major or Minor"
             continue
 
         # Check if token is a known type or compound type expression (e.g. 'General and Hermetic')

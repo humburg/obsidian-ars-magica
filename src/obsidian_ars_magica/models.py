@@ -11,7 +11,7 @@ class VirtueFlawEntry:
 
     name: str
     category: str  # "Virtue" or "Flaw"
-    cost: str  # e.g., "Major", "Minor", "Free", "Major or Minor"
+    cost: str  # e.g., "Major", "Minor", "Free", "Minor or Major"
     types: list[str] = field(default_factory=list)  # e.g., ["Hermetic"]
     properties: list[str] = field(default_factory=list)  # e.g., ["Tainted"]
     raw_qualifiers: str = ""

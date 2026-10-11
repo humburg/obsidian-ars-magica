@@ -286,8 +286,10 @@ filters:
     - file.inFolder("spells")
     - 'technique == "Creo"'
     - 'form == "Ignem"'
+formulas:
+  name: 'file.asLink(note.name)'
 properties:
-  name:
+  formula.name:
     displayName: Spell
   level:
     displayName: Level
@@ -303,7 +305,7 @@ views:
   - type: table
     name: "Known Spells"
     order:
-      - name
+      - formula.name
       - level
       - range
       - duration

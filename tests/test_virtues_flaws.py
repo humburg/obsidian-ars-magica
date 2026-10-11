@@ -45,7 +45,7 @@ def test_parse_qualifiers_inverted_order():
 
 def test_parse_qualifiers_dual_cost():
     res1 = parse_qualifiers("*Major or Minor, Personality*<br>")
-    assert res1["cost"] == "Major or Minor"
+    assert res1["cost"] == "Minor or Major"
     assert res1["types"] == ["Personality"]
     assert res1["properties"] == []
 
@@ -232,6 +232,11 @@ def test_extract_virtues_and_flaws_core_rules():
         assert f.cost
         assert f.types
         assert len(f.body) > 20, f"Flaw body too short: {f.name}"
+
+    # Verify cost normalization: no "Major or Minor", and "Minor or Major" is present
+    all_costs = {v.cost for v in virtues} | {f.cost for f in flaws}
+    assert "Major or Minor" not in all_costs
+    assert "Minor or Major" in all_costs
 
     # Verify 0 filename collisions within each category
     v_filenames = [v.filename for v in virtues]

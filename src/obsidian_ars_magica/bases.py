@@ -10,8 +10,10 @@ filters:
     - file.inFolder("spells")
     - 'technique == "{technique}"'
     - 'form == "{form}"'
+formulas:
+  name: 'file.asLink(note.name)'
 properties:
-  name:
+  formula.name:
     displayName: Spell
   level:
     displayName: Level
@@ -27,7 +29,7 @@ views:
   - type: table
     name: "Known Spells"
     order:
-      - name
+      - formula.name
       - level
       - range
       - duration
@@ -44,8 +46,10 @@ def generate_spells_base() -> str:
     return """filters:
   and:
     - file.inFolder("spells")
+formulas:
+  name: 'file.asLink(note.name)'
 properties:
-  name:
+  formula.name:
     displayName: Spell
   technique:
     displayName: Technique
@@ -69,7 +73,7 @@ views:
   - type: table
     name: "All Spells"
     order:
-      - name
+      - formula.name
       - technique
       - form
       - level
@@ -78,7 +82,7 @@ views:
       - target
       - ritual
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
   - type: table
     name: "By Arts"
@@ -86,7 +90,7 @@ views:
       property: arts
       direction: ASC
     order:
-      - name
+      - formula.name
       - level
       - range
       - duration
@@ -101,7 +105,7 @@ views:
       and:
         - 'ritual == true'
     order:
-      - name
+      - formula.name
       - technique
       - form
       - level
@@ -109,7 +113,7 @@ views:
       - duration
       - target
     sort:
-      - column: level
+      - column: formula.name
         direction: ASC
 """
 
@@ -119,8 +123,10 @@ def generate_virtues_base() -> str:
     return """filters:
   and:
     - file.inFolder("virtues")
+formulas:
+  name: 'file.asLink(note.name)'
 properties:
-  name:
+  formula.name:
     displayName: Virtue
   cost:
     displayName: Cost
@@ -132,12 +138,12 @@ views:
   - type: table
     name: "All Virtues"
     order:
-      - name
+      - formula.name
       - cost
       - type
       - properties
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
   - type: table
     name: "By Cost"
@@ -145,11 +151,11 @@ views:
       property: cost
       direction: ASC
     order:
-      - name
+      - formula.name
       - type
       - properties
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
 """
 
@@ -159,8 +165,10 @@ def generate_flaws_base() -> str:
     return """filters:
   and:
     - file.inFolder("flaws")
+formulas:
+  name: 'file.asLink(note.name)'
 properties:
-  name:
+  formula.name:
     displayName: Flaw
   cost:
     displayName: Cost
@@ -172,12 +180,12 @@ views:
   - type: table
     name: "All Flaws"
     order:
-      - name
+      - formula.name
       - cost
       - type
       - properties
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
   - type: table
     name: "By Cost"
@@ -185,11 +193,11 @@ views:
       property: cost
       direction: ASC
     order:
-      - name
+      - formula.name
       - type
       - properties
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
 """
 
@@ -199,8 +207,10 @@ def generate_abilities_base() -> str:
     return """filters:
   and:
     - file.inFolder("abilities")
+formulas:
+  name: 'file.asLink(note.name)'
 properties:
-  name:
+  formula.name:
     displayName: Ability
   type:
     displayName: Type
@@ -212,12 +222,12 @@ views:
   - type: table
     name: "All Abilities"
     order:
-      - name
+      - formula.name
       - type
       - untrained
       - specialties
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
   - type: table
     name: "By Type"
@@ -225,10 +235,10 @@ views:
       property: type
       direction: ASC
     order:
-      - name
+      - formula.name
       - untrained
       - specialties
     sort:
-      - column: name
+      - column: formula.name
         direction: ASC
 """
