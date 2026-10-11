@@ -34,5 +34,16 @@ jobs:
         run: ruff check .
 
       - name: Run tests with coverage
-        run: pytest --cov=obsidian_ars_magica
+        run: |
+          pytest --cov=obsidian_ars_magica --cov-report=html:htmlcov --cov-report=term
+          echo "## Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload HTML coverage report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: htmlcov/
+          retention-days: 14
 
