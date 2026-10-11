@@ -15,13 +15,14 @@
   3. If still unsure: immediately ask for clarification with targeted questions.
 
 ## 3. Python Development Standards
+- **Virtual Environment**: ALWAYS use the project virtual environment located in `.venv/` (e.g., `.venv\Scripts\python.exe`, `.venv\Scripts\pytest.exe`, `.venv\Scripts\ruff.exe`). Never invoke the system or global Python interpreters directly.
 - **Code Organization**: Organize code into cohesive modules and functions following standard Python best practices (e.g., `src/<package_name>/`). Maintain single responsibility per function/module.
 - **Reuse Before Rewriting**: Leverage existing standard library modules, installed third-party libraries, and internal project utilities before writing custom implementations.
-- **Dependency Management & Permission**: If an external or third-party package not currently installed in the local environment provides functionality relevant to the task, request permission from the user before installing it.
+- **Dependency Management & Permission**: If an external or third-party package not currently installed in `.venv` provides functionality relevant to the task, request permission from the user before installing it.
 - **Readability & Comments**: Write human-readable code. Add clear comments explaining non-trivial logic, domain rules, and design choices.
 
 ## 4. Testing & Regression Workflow (Pytest)
-- **Framework**: All automated tests must use `pytest` and reside in `tests/`.
+- **Framework**: All automated tests must use `pytest` and reside in `tests/`. Always run tests using `.venv\Scripts\pytest` (or `.venv/bin/pytest`).
 - **New Code Coverage**: When writing new functions or modules, always accompany them with unit tests verifying correctness, edge cases, and expected failures.
 - **Bug Fix & Regression Protocol**:
   1. When addressing a bug or unwanted behavior, check whether the scenario is already covered by an existing test.
@@ -29,4 +30,5 @@
   3. If no test covers the scenario, create a new unit test reproducing the bug.
   4. Verify that the test FAILS against the existing/unpatched code.
   5. Apply the fix and verify that the test PASSES against the updated code.
+
 
