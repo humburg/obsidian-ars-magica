@@ -118,16 +118,16 @@ views:
 """
 
 
-def generate_virtues_base() -> str:
-    """Generate standalone Obsidian Base content for Virtues (virtues.base)."""
-    return """filters:
+def _generate_entity_base(folder: str, entity_name: str, plural_name: str) -> str:
+    """Helper to generate standalone Obsidian Base content for Virtues or Flaws."""
+    return f"""filters:
   and:
-    - file.inFolder("virtues")
+    - file.inFolder("{folder}")
 formulas:
   name: 'file.asLink(note.name)'
 properties:
   formula.name:
-    displayName: Virtue
+    displayName: {entity_name}
   cost:
     displayName: Cost
   type:
@@ -136,7 +136,7 @@ properties:
     displayName: Properties
 views:
   - type: table
-    name: "All Virtues"
+    name: "{plural_name}"
     order:
       - formula.name
       - cost
@@ -158,48 +158,16 @@ views:
       - column: formula.name
         direction: ASC
 """
+
+
+def generate_virtues_base() -> str:
+    """Generate standalone Obsidian Base content for Virtues (virtues.base)."""
+    return _generate_entity_base("virtues", "Virtue", "All Virtues")
 
 
 def generate_flaws_base() -> str:
     """Generate standalone Obsidian Base content for Flaws (flaws.base)."""
-    return """filters:
-  and:
-    - file.inFolder("flaws")
-formulas:
-  name: 'file.asLink(note.name)'
-properties:
-  formula.name:
-    displayName: Flaw
-  cost:
-    displayName: Cost
-  type:
-    displayName: Type
-  properties:
-    displayName: Properties
-views:
-  - type: table
-    name: "All Flaws"
-    order:
-      - formula.name
-      - cost
-      - type
-      - properties
-    sort:
-      - column: formula.name
-        direction: ASC
-  - type: table
-    name: "By Cost"
-    groupBy:
-      property: cost
-      direction: ASC
-    order:
-      - formula.name
-      - type
-      - properties
-    sort:
-      - column: formula.name
-        direction: ASC
-"""
+    return _generate_entity_base("flaws", "Flaw", "All Flaws")
 
 
 def generate_abilities_base() -> str:

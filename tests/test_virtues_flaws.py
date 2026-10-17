@@ -11,6 +11,7 @@ from obsidian_ars_magica.virtues_flaws import (
     extract_virtues_and_flaws,
     format_entry_markdown,
     parse_qualifiers,
+    parse_virtues_and_flaws,
 )
 
 CORE_RULES_PATH = Path(
@@ -269,3 +270,38 @@ def test_export_virtues_and_flaws(tmp_path: Path):
     # Verify standalone base files
     assert (tmp_path / "virtues.base").exists()
     assert (tmp_path / "flaws.base").exists()
+
+
+def test_parse_virtues_and_flaws_in_memory():
+    sample = """# Chapter 4: Virtues and Flaws
+
+## List of Virtues
+[Pious](#pious)
+
+## Virtues
+
+#### Pious
+*Minor, General*<br>
+A holy disposition.
+
+## List of Flaws
+[Proud](#proud)
+
+## Flaws
+
+#### Proud
+*Minor, Personality*<br>
+Excessive pride.
+
+# Chapter 5: Abilities
+"""
+    virtues, flaws = parse_virtues_and_flaws(sample)
+    assert len(virtues) == 1
+    assert virtues[0].name == "Pious"
+    assert virtues[0].cost == "Minor"
+    assert virtues[0].types == ["General"]
+    assert len(flaws) == 1
+    assert flaws[0].name == "Proud"
+    assert flaws[0].cost == "Minor"
+    assert flaws[0].types == ["Personality"]
+

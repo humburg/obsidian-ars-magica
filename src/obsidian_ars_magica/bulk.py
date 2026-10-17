@@ -5,7 +5,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 from obsidian_ars_magica.abilities import export_abilities
-from obsidian_ars_magica.spells import export_guidelines, export_spells
+from obsidian_ars_magica.guidelines import export_guidelines
+from obsidian_ars_magica.spells import export_spells
 from obsidian_ars_magica.virtues_flaws import export_virtues_and_flaws
 
 
@@ -37,7 +38,7 @@ def export_all(
     if progress_callback:
         progress_callback("virtues_flaws", vf_counts)
 
-    # 2. Abilities (Chapter 6)
+    # 2. Abilities (Chapter 5)
     ab_counts = export_abilities(source, target_root)
     if progress_callback:
         progress_callback("abilities", ab_counts)
@@ -69,3 +70,5 @@ def export_all(
         "total": total,
     }
 
+
+__all__ = ["export_all"]

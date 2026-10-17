@@ -26,9 +26,9 @@ The CLI provides dedicated extraction tools for individual systems as well as a 
 
 | Command | Source Content | Target Output Folder | Key Generated Features |
 | :--- | :--- | :--- | :--- |
-| `extract-all` (alias: `all`) | Chapters 4, 6, 9 | `output/` (all subfolders & `.base` files) | Runs all four extractors in sequence, generating Virtues, Flaws, Abilities, Spells, Guidelines, and standalone Base databases in a single pass with consolidated progress reporting. |
+| `extract-all` (alias: `all`) | Chapters 4, 5, 9 | `output/` (all subfolders & `.base` files) | Runs all four extractors in sequence, generating Virtues, Flaws, Abilities, Spells, Guidelines, and standalone Base databases in a single pass with consolidated progress reporting. |
 | `extract-virtues-flaws` | Chapter 4: Virtues & Flaws | `output/virtues/`<br>`output/flaws/`<br>`output/virtues.base`<br>`output/flaws.base` | Categorized as Virtue or Flaw; parses costs (Minor/Major/Free), types (Hermetic, General, Social Status, etc.), and custom properties; generates standalone `virtues.base` and `flaws.base` databases. |
-| `extract-abilities` | Chapter 6: Abilities | `output/abilities/`<br>`output/abilities.base` | Parses ability types (General, Academic, Arcane, Martial, Supernatural), specialties list, and untrained flags; generates standalone `abilities.base` database. |
+| `extract-abilities` | Chapter 5: Abilities | `output/abilities/`<br>`output/abilities.base` | Parses ability types (General, Academic, Arcane, Martial, Supernatural), specialties list, and untrained flags; generates standalone `abilities.base` database. |
 | `extract-spells` | Chapter 9: Spells | `output/spells/`<br>`output/spells.base` | Parses Arts, requisites, Range, Duration, Target, Ritual flag, base level, magnitude breakdown (+R/+D/+T modifiers), and direct guideline anchor link; generates standalone `spells.base` database. |
 | `extract-guidelines` | Chapter 9: Spells | `output/guidelines/` | Generates 50 Technique + Form guideline notes with level headings, block IDs on individual bullets, and embedded Obsidian Bases query tables. |
 
@@ -102,7 +102,7 @@ obsidian-ars-magica extract-virtues-flaws --output "C:/MyVault/ArsMagica"
 ```
 
 #### 2. Extract Abilities (`extract-abilities`)
-Extracts all character abilities from Chapter 6 into separate files in `abilities/`, and generates a standalone `abilities.base` database.
+Extracts all character abilities from Chapter 5 into separate files in `abilities/`, and generates a standalone `abilities.base` database.
 
 ```bash
 obsidian-ars-magica extract-abilities

@@ -12,6 +12,8 @@ from obsidian_ars_magica.spells import (
     format_spell_markdown,
     parse_rdt_line,
     parse_requisites_line,
+    parse_spells,
+    spell_level_to_magnitude,
 )
 
 CORE_RULES_PATH = Path(
@@ -255,4 +257,45 @@ def test_export_spells(tmp_path):
     assert (spells_dir / "Soothe-Pains-of-the-Beast.md").exists()
     assert (spells_dir / "Aegis-of-the-Hearth.md").exists()
     assert (tmp_path / "spells.base").exists()
+
+
+def test_spell_level_to_magnitude():
+    # Base level < 5
+    assert spell_level_to_magnitude(base_level=1, level=1) == 0
+    assert spell_level_to_magnitude(base_level=1, level=4) == 3
+    assert spell_level_to_magnitude(base_level=1, level=5) == 4
+    assert spell_level_to_magnitude(base_level=1, level=10) == 5  # (5 - 1) + (10 - 5)//5 = 5
+    # Base level >= 5
+    assert spell_level_to_magnitude(base_level=5, level=5) == 0
+    assert spell_level_to_magnitude(base_level=5, level=20) == 3  # (20 - 5)//5 = 3
+    assert spell_level_to_magnitude(base_level=25, level=35) == 2  # (35 - 25)//5 = 2
+
+
+def test_parse_spells_in_memory():
+    text = """# Chapter 9: Spells
+
+### Creo Animal Spells
+
+#### LEVEL 20
+
+##### Beast of the Wild
+R: Touch, D: Sun, T: Ind
+Soothes a wild animal.
+(Base 10, +1 Touch, +1 Sun)
+
+# Chapter 10: Long Term Events
+"""
+    spells = parse_spells(text)
+    assert len(spells) == 1
+    spell = spells[0]
+    assert spell.name == "Beast of the Wild"
+    assert spell.technique == "Creo"
+    assert spell.form == "Animal"
+    assert spell.level == 20
+    assert spell.range == "Touch"
+    assert spell.duration == "Sun"
+    assert spell.target == "Individual"
+    assert spell.base_level == 10
+    assert spell.total_magnitudes == 2
+
 

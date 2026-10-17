@@ -10,6 +10,7 @@ from obsidian_ars_magica.abilities import (
     extract_abilities,
     format_ability_frontmatter,
     format_ability_markdown,
+    parse_abilities,
     split_specialties,
 )
 from obsidian_ars_magica.models import AbilityEntry
@@ -260,3 +261,29 @@ def test_export_abilities(tmp_path: Path):
 
     # Verify standalone base file
     assert (tmp_path / "abilities.base").exists()
+
+
+def test_parse_abilities_in_memory():
+    sample = """# Chapter 5: Abilities
+
+## Abilities by Type
+
+#### General Abilities
+
+[Riding](#riding)<br>
+
+## Ability List
+
+#### Riding
+Handling horses.
+*Specialties:* horses. (General)
+
+# Chapter 6: Covenants
+"""
+    abilities = parse_abilities(sample)
+    assert len(abilities) == 1
+    assert abilities[0].name == "Riding"
+    assert abilities[0].ability_type == "General"
+    assert abilities[0].untrained is True
+    assert abilities[0].specialties == ["horses"]
+

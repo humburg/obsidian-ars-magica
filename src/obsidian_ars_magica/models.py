@@ -4,31 +4,66 @@
 import re
 from dataclasses import dataclass, field
 
+from obsidian_ars_magica.formatters import sanitize_filename
+
+TECH_ABBREV: dict[str, str] = {
+    "Creo": "Cr",
+    "Intellego": "In",
+    "Muto": "Mu",
+    "Perdo": "Pe",
+    "Rego": "Re",
+}
+
+FORM_ABBREV: dict[str, str] = {
+    "Animal": "An",
+    "Aquam": "Aq",
+    "Auram": "Au",
+    "Corpus": "Co",
+    "Herbam": "He",
+    "Ignem": "Ig",
+    "Imaginem": "Im",
+    "Mentem": "Me",
+    "Terram": "Te",
+    "Vim": "Vi",
+}
+
+TECHNIQUES: list[str] = list(TECH_ABBREV.keys())
+FORMS: list[str] = list(FORM_ABBREV.keys())
+
 
 @dataclass
-class VirtueFlawEntry:
-    """Represents a single parsed Virtue or Flaw."""
+class BaseNoteEntry:
+    """Base dataclass representing an atomic Obsidian note."""
 
     name: str
-    category: str  # "Virtue" or "Flaw"
-    cost: str  # e.g., "Major", "Minor", "Free", "Minor or Major"
-    types: list[str] = field(default_factory=list)  # e.g., ["Hermetic"]
-    properties: list[str] = field(default_factory=list)  # e.g., ["Tainted"]
-    raw_qualifiers: str = ""
+    category: str
     body: str = ""
     source_line: int = 0
 
     @property
     def filename(self) -> str:
         """Sanitized file name with spaces and problematic characters replaced by hyphens."""
-        clean = re.sub(r"[^\w]+", "-", self.name, flags=re.UNICODE).strip("-")
-        return f"{clean}.md"
+        return sanitize_filename(self.name)
 
     @property
     def aliases(self) -> list[str]:
         """List of aliases for Obsidian wikilink and AI resolution."""
-        # Include original name as an alias so natural language links match
         return [self.name]
+
+    @property
+    def tags(self) -> list[str]:
+        """Generate normalized tags for Obsidian tag filtering and AI queries."""
+        return [self.category.lower()]
+
+
+@dataclass
+class VirtueFlawEntry(BaseNoteEntry):
+    """Represents a single parsed Virtue or Flaw."""
+
+    cost: str = ""  # e.g., "Major", "Minor", "Free", "Minor or Major"
+    types: list[str] = field(default_factory=list)  # e.g., ["Hermetic"]
+    properties: list[str] = field(default_factory=list)  # e.g., ["Tainted"]
+    raw_qualifiers: str = ""
 
     @property
     def tags(self) -> list[str]:
@@ -58,22 +93,13 @@ class VirtueFlawEntry:
 
 
 @dataclass
-class AbilityEntry:
+class AbilityEntry(BaseNoteEntry):
     """Represents a single parsed Ability."""
 
-    name: str
-    ability_type: str  # e.g., "General", "Academic", "Arcane", "Martial", "Supernatural"
+    ability_type: str = "General"  # e.g., "General", "Academic", "Arcane", "Martial", "Supernatural"
     specialties: list[str] = field(default_factory=list)
     untrained: bool = True
     category: str = "Ability"
-    body: str = ""
-    source_line: int = 0
-
-    @property
-    def filename(self) -> str:
-        """Sanitized file name with spaces and problematic characters replaced by hyphens."""
-        clean = re.sub(r"[^\w]+", "-", self.name, flags=re.UNICODE).strip("-")
-        return f"{clean}.md"
 
     @property
     def aliases(self) -> list[str]:
@@ -93,39 +119,16 @@ class AbilityEntry:
         return list(dict.fromkeys(raw_tags))
 
 
-TECH_ABBREV: dict[str, str] = {
-    "Creo": "Cr",
-    "Intellego": "In",
-    "Muto": "Mu",
-    "Perdo": "Pe",
-    "Rego": "Re",
-}
-
-FORM_ABBREV: dict[str, str] = {
-    "Animal": "An",
-    "Aquam": "Aq",
-    "Auram": "Au",
-    "Corpus": "Co",
-    "Herbam": "He",
-    "Ignem": "Ig",
-    "Imaginem": "Im",
-    "Mentem": "Me",
-    "Terram": "Te",
-    "Vim": "Vi",
-}
-
-
 @dataclass
-class SpellEntry:
+class SpellEntry(BaseNoteEntry):
     """Represents a single parsed Ars Magica spell."""
 
-    name: str
-    technique: str
-    form: str
-    level: int | str  # integer level (e.g. 20, 50) or "General"
-    range: str  # e.g. "Touch", "Voice"
-    duration: str  # e.g. "Sun", "Momentary"
-    target: str  # e.g. "Individual", "Group"
+    technique: str = ""
+    form: str = ""
+    level: int | str = 0  # integer level (e.g. 20, 50) or "General"
+    range: str = ""  # e.g. "Touch", "Voice"
+    duration: str = ""  # e.g. "Sun", "Momentary"
+    target: str = ""  # e.g. "Individual", "Group"
     ritual: bool = False
     technique_requisites: list[str] = field(default_factory=list)
     form_requisites: list[str] = field(default_factory=list)
@@ -137,9 +140,17 @@ class SpellEntry:
     additional_modifiers: list[str] = field(default_factory=list)
     raw_rdt: str = ""
     raw_design: str = ""
-    body: str = ""
-    source_line: int = 0
     category: str = "Spell"
+
+    @property
+    def total_magnitudes(self) -> int:
+        """Sum of range, duration, target, and additional magnitudes."""
+        return (
+            self.range_magnitude
+            + self.duration_magnitude
+            + self.target_magnitude
+            + self.additional_magnitudes
+        )
 
     @property
     def primary_arts(self) -> str:
@@ -163,10 +174,28 @@ class SpellEntry:
         return primary
 
     @property
-    def filename(self) -> str:
-        """Sanitized file name with spaces and problematic characters replaced by hyphens."""
-        clean = re.sub(r"[^\w]+", "-", self.name, flags=re.UNICODE).strip("-")
-        return f"{clean}.md"
+    def guideline_link(self) -> str:
+        """Wiki-link destination to the associated guideline section and level."""
+        if isinstance(self.base_level, int) and self.base_level > 0:
+            return f"[[{self.technique}-{self.form}-Guidelines#Level {self.base_level}]]"
+        if self.base_level == "General":
+            return f"[[{self.technique}-{self.form}-Guidelines#Level General]]"
+        return f"[[{self.technique}-{self.form}-Guidelines]]"
+
+    @property
+    def guideline_display_link(self) -> str:
+        """Wiki-link formatted with readable display text for markdown bodies."""
+        if isinstance(self.base_level, int) and self.base_level > 0:
+            return (
+                f"[[{self.technique}-{self.form}-Guidelines#Level {self.base_level}|"
+                f"{self.technique} {self.form} Base {self.base_level}]]"
+            )
+        if self.base_level == "General":
+            return (
+                f"[[{self.technique}-{self.form}-Guidelines#Level General|"
+                f"{self.technique} {self.form} Base General]]"
+            )
+        return f"[[{self.technique}-{self.form}-Guidelines|{self.technique} {self.form} Guidelines]]"
 
     @property
     def aliases(self) -> list[str]:
@@ -220,6 +249,11 @@ class GuidelineSection:
     guidelines_by_level: list[GuidelineLevelEntry] = field(default_factory=list)
     source_line: int = 0
     category: str = "Spell Guidelines"
+
+    @property
+    def name(self) -> str:
+        """Canonical note title."""
+        return f"{self.technique} {self.form} Guidelines"
 
     @property
     def primary_arts(self) -> str:

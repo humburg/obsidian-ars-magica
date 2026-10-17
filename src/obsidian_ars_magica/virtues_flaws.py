@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from obsidian_ars_magica.bases import generate_flaws_base, generate_virtues_base
+from obsidian_ars_magica.formatters import dump_frontmatter, yaml_quote
 from obsidian_ars_magica.models import VirtueFlawEntry
 
 KNOWN_COSTS = [
@@ -26,12 +27,6 @@ KNOWN_TYPES = [
     "mythic companion",
     "special",
 ]
-
-
-def yaml_quote(value: str) -> str:
-    """Safely quote a string for YAML frontmatter."""
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
 
 
 def parse_qualifiers(raw_line: str) -> dict[str, Any]:
@@ -91,47 +86,15 @@ def parse_qualifiers(raw_line: str) -> dict[str, Any]:
 
 def format_frontmatter(entry: VirtueFlawEntry) -> str:
     """Format the YAML frontmatter for an entry."""
-    lines = [
-        "---",
-        f"name: {yaml_quote(entry.name)}",
-        f"category: {yaml_quote(entry.category)}",
-        f"cost: {yaml_quote(entry.cost)}",
-    ]
-
-    # Types list
-    if entry.types:
-        lines.append("type:")
-        for t in entry.types:
-            lines.append(f"  - {yaml_quote(t)}")
-    else:
-        lines.append("type: []")
-
-    # Properties list
-    if entry.properties:
-        lines.append("properties:")
-        for p in entry.properties:
-            lines.append(f"  - {yaml_quote(p)}")
-    else:
-        lines.append("properties: []")
-
-    # Aliases list
-    if entry.aliases:
-        lines.append("aliases:")
-        for alias in entry.aliases:
-            lines.append(f"  - {yaml_quote(alias)}")
-    else:
-        lines.append("aliases: []")
-
-    # Tags list
-    if entry.tags:
-        lines.append("tags:")
-        for tag in entry.tags:
-            lines.append(f"  - {yaml_quote(tag)}")
-    else:
-        lines.append("tags: []")
-
-    lines.append("---")
-    return "\n".join(lines)
+    return dump_frontmatter({
+        "name": entry.name,
+        "category": entry.category,
+        "cost": entry.cost,
+        "type": entry.types,
+        "properties": entry.properties,
+        "aliases": entry.aliases,
+        "tags": entry.tags,
+    })
 
 
 def format_entry_markdown(entry: VirtueFlawEntry) -> str:
@@ -200,17 +163,16 @@ def _parse_section_entries(
     return entries
 
 
-def extract_virtues_and_flaws(
-    file_path: Path | str,
+def parse_virtues_and_flaws(
+    text: str,
+    source_label: str = "source",
 ) -> tuple[list[VirtueFlawEntry], list[VirtueFlawEntry]]:
-    """Extract all Virtues and Flaws from the core rules markdown file.
+    """Extract all Virtues and Flaws from rules markdown text.
 
     Returns:
         tuple (virtues, flaws)
     """
-    path = Path(file_path)
-    with path.open("r", encoding="utf-8") as f:
-        lines = f.readlines()
+    lines = text.splitlines(keepends=True)
 
     virtues_start: int | None = None
     list_of_flaws_idx: int | None = None
@@ -235,7 +197,7 @@ def extract_virtues_and_flaws(
         or chapter_5_idx is None
     ):
         raise ValueError(
-            f"Could not locate required section boundaries in {file_path}. "
+            f"Could not locate required section boundaries in {source_label}. "
             f"Found: Virtues={virtues_start}, ListOfFlaws={list_of_flaws_idx}, "
             f"Flaws={flaws_start}, Chapter5={chapter_5_idx}"
         )
@@ -244,6 +206,15 @@ def extract_virtues_and_flaws(
     flaws = _parse_section_entries(lines, flaws_start, chapter_5_idx, "Flaw")
 
     return virtues, flaws
+
+
+def extract_virtues_and_flaws(
+    file_path: Path | str,
+) -> tuple[list[VirtueFlawEntry], list[VirtueFlawEntry]]:
+    """Extract all Virtues and Flaws from the core rules markdown file."""
+    path = Path(file_path)
+    content = path.read_text(encoding="utf-8")
+    return parse_virtues_and_flaws(content, source_label=str(file_path))
 
 
 def export_virtues_and_flaws(
@@ -283,3 +254,16 @@ def export_virtues_and_flaws(
         "virtues": len(virtues),
         "flaws": len(flaws),
     }
+
+
+__all__ = [
+    "KNOWN_COSTS",
+    "KNOWN_TYPES",
+    "export_virtues_and_flaws",
+    "extract_virtues_and_flaws",
+    "format_entry_markdown",
+    "format_frontmatter",
+    "parse_qualifiers",
+    "parse_virtues_and_flaws",
+    "yaml_quote",
+]

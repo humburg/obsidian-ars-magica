@@ -5,13 +5,8 @@ import re
 from pathlib import Path
 
 from obsidian_ars_magica.bases import generate_abilities_base
+from obsidian_ars_magica.formatters import dump_frontmatter, yaml_quote
 from obsidian_ars_magica.models import AbilityEntry
-
-
-def yaml_quote(value: str) -> str:
-    """Safely quote a string for YAML frontmatter."""
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
 
 
 def split_specialties(raw_specialties_text: str) -> list[str]:
@@ -35,7 +30,6 @@ def split_specialties(raw_specialties_text: str) -> list[str]:
         flags=re.IGNORECASE,
     ).strip()
     clean = clean.rstrip(".").lstrip(":").strip()
-
 
     parts: list[str] = []
     current: list[str] = []
@@ -64,42 +58,15 @@ def split_specialties(raw_specialties_text: str) -> list[str]:
 
 def format_ability_frontmatter(entry: AbilityEntry) -> str:
     """Format YAML frontmatter for an Ability note."""
-    lines = [
-        "---",
-        f"name: {yaml_quote(entry.name)}",
-        f"category: {yaml_quote(entry.category)}",
-        f"type: {yaml_quote(entry.ability_type)}",
-    ]
-
-    # Specialties list
-    if entry.specialties:
-        lines.append("specialties:")
-        for spec in entry.specialties:
-            lines.append(f"  - {yaml_quote(spec)}")
-    else:
-        lines.append("specialties: []")
-
-    # Untrained flag (boolean)
-    lines.append(f"untrained: {'true' if entry.untrained else 'false'}")
-
-    # Aliases list
-    if entry.aliases:
-        lines.append("aliases:")
-        for alias in entry.aliases:
-            lines.append(f"  - {yaml_quote(alias)}")
-    else:
-        lines.append("aliases: []")
-
-    # Tags list
-    if entry.tags:
-        lines.append("tags:")
-        for tag in entry.tags:
-            lines.append(f"  - {yaml_quote(tag)}")
-    else:
-        lines.append("tags: []")
-
-    lines.append("---")
-    return "\n".join(lines)
+    return dump_frontmatter({
+        "name": entry.name,
+        "category": entry.category,
+        "type": entry.ability_type,
+        "specialties": entry.specialties,
+        "untrained": entry.untrained,
+        "aliases": entry.aliases,
+        "tags": entry.tags,
+    })
 
 
 def format_ability_markdown(entry: AbilityEntry) -> str:
@@ -116,13 +83,9 @@ def _clean_heading_name(raw_heading: str) -> tuple[str, bool]:
     return cleaned, has_star
 
 
-def extract_abilities(
-    file_path: Path | str,
-) -> list[AbilityEntry]:
-    """Extract all Abilities from the core rules markdown file."""
-    path = Path(file_path)
-    with path.open("r", encoding="utf-8") as f:
-        lines = f.readlines()
+def parse_abilities(text: str, source_label: str = "source") -> list[AbilityEntry]:
+    """Parse all Abilities from markdown rules text."""
+    lines = text.splitlines(keepends=True)
 
     abt_idx: int | None = None
     al_idx: int | None = None
@@ -137,10 +100,9 @@ def extract_abilities(
         elif stripped.startswith("# Chapter 6:") and end_idx is None:
             end_idx = idx
 
-    # If section boundaries aren't found, check if synthetic file has ## Ability List
     if al_idx is None:
         raise ValueError(
-            f"Could not locate '## Ability List' section in {file_path}."
+            f"Could not locate '## Ability List' section in {source_label}."
         )
 
     if end_idx is None:
@@ -164,8 +126,6 @@ def extract_abilities(
                 }
 
     # 2. Identify ability headings in ## Ability List
-    # We only treat a '#### ' heading as a new ability if it matches a canonical ability
-    # (or if no canonical list exists, any #### heading not matching known sub-headers).
     known_subheadings = {"hex delay modifiers", "hex effects"}
 
     ability_headings: list[tuple[int, str, str, str, bool]] = []
@@ -184,7 +144,6 @@ def extract_abilities(
             ability_type: str = "General"
 
             if clean_name.lower() in known_subheadings:
-                # Explicitly known sub-heading within an ability
                 i += 1
                 continue
 
@@ -260,6 +219,15 @@ def extract_abilities(
     return entries
 
 
+def extract_abilities(
+    file_path: Path | str,
+) -> list[AbilityEntry]:
+    """Extract all Abilities from the core rules markdown file."""
+    path = Path(file_path)
+    content = path.read_text(encoding="utf-8")
+    return parse_abilities(content, source_label=str(file_path))
+
+
 def export_abilities(
     source_path: Path | str,
     output_dir: Path | str,
@@ -285,3 +253,14 @@ def export_abilities(
     return {
         "abilities": len(abilities),
     }
+
+
+__all__ = [
+    "export_abilities",
+    "extract_abilities",
+    "format_ability_frontmatter",
+    "format_ability_markdown",
+    "parse_abilities",
+    "split_specialties",
+    "yaml_quote",
+]

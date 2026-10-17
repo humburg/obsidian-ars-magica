@@ -1,32 +1,23 @@
 # SPDX-License-Identifier: MIT
-"""Extractor and formatter for Ars Magica Spells and Spell Guidelines."""
+"""Extractor and formatter for Ars Magica Spells."""
 
 import re
 from pathlib import Path
 
-from obsidian_ars_magica.bases import (
-    format_guideline_bases_block,
-    generate_spells_base,
+from obsidian_ars_magica.bases import generate_spells_base
+from obsidian_ars_magica.formatters import dump_frontmatter, yaml_quote
+from obsidian_ars_magica.guidelines import (
+    export_guidelines,
+    extract_guidelines,
+    format_guideline_frontmatter,
+    format_guideline_markdown,
+    parse_guidelines,
 )
 from obsidian_ars_magica.models import (
-    GuidelineLevelEntry,
-    GuidelineSection,
+    FORMS,
+    TECHNIQUES,
     SpellEntry,
 )
-
-TECHNIQUES: list[str] = ["Creo", "Intellego", "Muto", "Perdo", "Rego"]
-FORMS: list[str] = [
-    "Animal",
-    "Aquam",
-    "Auram",
-    "Corpus",
-    "Herbam",
-    "Ignem",
-    "Imaginem",
-    "Mentem",
-    "Terram",
-    "Vim",
-]
 
 RANGE_CANONICAL: dict[str, tuple[str, int]] = {
     "per": ("Personal", 0),
@@ -79,12 +70,6 @@ TARGET_CANONICAL: dict[str, tuple[str, int]] = {
 }
 
 
-def yaml_quote(value: str) -> str:
-    """Safely quote a string for YAML frontmatter."""
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
-
-
 def clean_ocr_errors(text: str) -> str:
     """Normalize known OCR typos in Ars Magica spell texts.
 
@@ -115,7 +100,6 @@ def parse_rdt_line(
     # Standardize delimiters before D: and T:
     cleaned = re.sub(r"[\s\.,;]+D:\s*", ", D: ", cleaned)
     cleaned = re.sub(r"[\s\.,;]+T:\s*", ", T: ", cleaned)
-
 
     parts = [p.strip() for p in cleaned.split(",") if p.strip()]
     r_val, d_val, t_val = "", "", ""
@@ -167,6 +151,20 @@ def parse_requisites_line(
     return tech_reqs, form_reqs
 
 
+def spell_level_to_magnitude(base_level: int, level: int) -> int:
+    """Calculate total magnitudes between base level and target spell level.
+
+    Follows Ars Magica 5th Edition rules:
+    - Levels 1-5 increase by 1 magnitude per level.
+    - Levels 5+ increase by 1 magnitude per 5 levels.
+    """
+    if base_level < 5:
+        if level <= 5:
+            return level - base_level
+        return (5 - base_level) + (level - 5) // 5
+    return (level - base_level) // 5
+
+
 def calculate_magnitudes_and_base(
     body_text: str,
     level: int | str,
@@ -210,13 +208,7 @@ def calculate_magnitudes_and_base(
     known_mag = range_mag + duration_mag + target_mag
 
     if isinstance(level, int) and isinstance(base_level, int):
-        if base_level < 5:
-            if level <= 5:
-                total_mags = level - base_level
-            else:
-                total_mags = (5 - base_level) + (level - 5) // 5
-        else:
-            total_mags = (level - base_level) // 5
+        total_mags = spell_level_to_magnitude(base_level, level)
         add_mag = total_mags - known_mag
 
     # 4. Extract modifier notes if raw_design exists
@@ -254,22 +246,21 @@ def calculate_magnitudes_and_base(
             ):
                 add_modifiers.append(cleaned_m)
 
-
     return base_level, add_mag, add_modifiers, raw_design
 
 
-def extract_spells(source_path: Path | str) -> list[SpellEntry]:
-    """Parse Ars Magica core rules markdown and extract all Spells."""
-    source = Path(source_path)
-    lines = source.read_text(encoding="utf-8").splitlines()
+def parse_spells(text: str) -> list[SpellEntry]:
+    """Parse Ars Magica core rules markdown text and extract all Spells."""
+    lines = text.splitlines()
 
     # Locate Chapter 9: Spells
     ch9_start = 0
     ch10_start = len(lines)
     for idx, line in enumerate(lines):
-        if line.strip() == "# Chapter 9: Spells":
+        stripped = line.strip()
+        if stripped == "# Chapter 9: Spells":
             ch9_start = idx
-        elif line.strip() == "# Chapter 10: Long Term Events":
+        elif stripped == "# Chapter 10: Long Term Events":
             ch10_start = idx
             break
 
@@ -320,7 +311,6 @@ def extract_spells(source_path: Path | str) -> list[SpellEntry]:
                 break
             entry_lines.append(l)
 
-
         # First non-empty line is RDT
         non_empty_indices = [
             j for j, l in enumerate(entry_lines) if l.strip()
@@ -347,7 +337,6 @@ def extract_spells(source_path: Path | str) -> list[SpellEntry]:
                 body_start_idx = second_idx + 1
 
         raw_body = clean_ocr_errors("\n".join(entry_lines[body_start_idx:]).strip())
-
 
         base_level, add_mag, add_mods, raw_design = calculate_magnitudes_and_base(
             raw_body,
@@ -384,193 +373,38 @@ def extract_spells(source_path: Path | str) -> list[SpellEntry]:
     return spells
 
 
-def extract_guidelines(source_path: Path | str) -> list[GuidelineSection]:
-    """Parse Ars Magica core rules markdown and extract all 50 Spell Guideline sections."""
+def extract_spells(source_path: Path | str) -> list[SpellEntry]:
+    """Parse Ars Magica core rules markdown file and extract all Spells."""
     source = Path(source_path)
-    lines = source.read_text(encoding="utf-8").splitlines()
-
-    ch9_start = 0
-    ch10_start = len(lines)
-    for idx, line in enumerate(lines):
-        if line.strip() == "# Chapter 9: Spells":
-            ch9_start = idx
-        elif line.strip() == "# Chapter 10: Long Term Events":
-            ch10_start = idx
-            break
-
-    guidelines: list[GuidelineSection] = []
-
-    for form in FORMS:
-        for tech in TECHNIQUES:
-            heading = f"### {tech} {form} Guidelines"
-            # find heading line
-            heading_idx = -1
-            for idx in range(ch9_start, ch10_start):
-                if lines[idx].strip() == heading:
-                    heading_idx = idx
-                    break
-
-            if heading_idx == -1:
-                continue
-
-            # find section end (next "### ... Spells")
-            end_idx = heading_idx + 1
-            while end_idx < ch10_start:
-                if (
-                    lines[end_idx].startswith("### ")
-                    and lines[end_idx].endswith(" Spells")
-                ):
-                    break
-                end_idx += 1
-
-            sec_lines = lines[heading_idx + 1 : end_idx]
-
-            # Separate intro text and table
-            intro_lines: list[str] = []
-            table_lines: list[str] = []
-            in_table = False
-
-            for l in sec_lines:
-                stripped = l.strip()
-                if stripped.startswith("|"):
-                    in_table = True
-                    table_lines.append(stripped)
-                elif in_table:
-                    # After table has finished
-                    continue
-                else:
-                    intro_lines.append(l)
-
-            intro_body = "\n".join(intro_lines).strip()
-
-            # Parse table rows into GuidelineLevelEntry
-            levels_dict: dict[int | str, list[str]] = {}
-
-            for tl in table_lines:
-                parts = [p.strip() for p in tl.split("|")[1:-1]]
-                if len(parts) >= 2 and not all(c == "-" for c in parts[0]):
-                    lvl_col = parts[0]
-                    desc_col = parts[1]
-                    if lvl_col.lower() == "level" or lvl_col.startswith("Additional"):
-                        continue
-
-                    # Level could be int or "General"
-                    level_key: int | str
-                    if lvl_col.isdigit():
-                        level_key = int(lvl_col)
-                    elif lvl_col.lower() == "general":
-                        level_key = "General"
-                    else:
-                        level_key = lvl_col
-
-                    # Desc may contain multiple bullets separated by <br>
-                    raw_bullets = [
-                        b.strip() for b in desc_col.split("<br>") if b.strip()
-                    ]
-                    clean_bullets: list[str] = []
-                    for b in raw_bullets:
-                        # Strip leading bullet symbols (•, -, *)
-                        cb = re.sub(r"^[•\-\*]\s*", "", b).strip()
-                        if cb:
-                            clean_bullets.append(cb)
-
-                    if level_key not in levels_dict:
-                        levels_dict[level_key] = []
-                    levels_dict[level_key].extend(clean_bullets)
-
-            level_entries = [
-                GuidelineLevelEntry(level=k, bullets=v)
-                for k, v in levels_dict.items()
-            ]
-
-            sec = GuidelineSection(
-                technique=tech,
-                form=form,
-                intro_body=intro_body,
-                guidelines_by_level=level_entries,
-                source_line=heading_idx + 1,
-            )
-            guidelines.append(sec)
-
-    return guidelines
+    content = source.read_text(encoding="utf-8")
+    return parse_spells(content)
 
 
 def format_spell_frontmatter(spell: SpellEntry) -> str:
     """Format YAML frontmatter for a Spell note."""
-    lines = [
-        "---",
-        f"name: {yaml_quote(spell.name)}",
-        f"category: {yaml_quote(spell.category)}",
-        f"technique: {yaml_quote(spell.technique)}",
-        f"form: {yaml_quote(spell.form)}",
-        f"arts: {yaml_quote(spell.primary_arts)}",
-        f"level: {spell.level if isinstance(spell.level, int) else yaml_quote(str(spell.level))}",
-    ]
-
-    # Requisites
-    if spell.technique_requisites:
-        lines.append("technique_requisites:")
-        for t in spell.technique_requisites:
-            lines.append(f"  - {yaml_quote(t)}")
-    else:
-        lines.append("technique_requisites: []")
-
-    if spell.form_requisites:
-        lines.append("form_requisites:")
-        for f in spell.form_requisites:
-            lines.append(f"  - {yaml_quote(f)}")
-    else:
-        lines.append("form_requisites: []")
-
-    # Parameters
-    lines.append(f"range: {yaml_quote(spell.range)}")
-    lines.append(f"duration: {yaml_quote(spell.duration)}")
-    lines.append(f"target: {yaml_quote(spell.target)}")
-    lines.append(f"ritual: {'true' if spell.ritual else 'false'}")
-
-    # Design breakdown
-    lines.append(
-        f"base_level: {spell.base_level if isinstance(spell.base_level, int) else yaml_quote(str(spell.base_level))}"
-    )
-    lines.append(f"range_magnitude: {spell.range_magnitude}")
-    lines.append(f"duration_magnitude: {spell.duration_magnitude}")
-    lines.append(f"target_magnitude: {spell.target_magnitude}")
-    lines.append(f"additional_magnitudes: {spell.additional_magnitudes}")
-
-    total_mags = (
-        spell.range_magnitude
-        + spell.duration_magnitude
-        + spell.target_magnitude
-        + spell.additional_magnitudes
-    )
-    lines.append(f"total_magnitudes: {total_mags}")
-
-    # Guideline link
-    if isinstance(spell.base_level, int) and spell.base_level > 0:
-        lines.append(
-            f'guideline: {yaml_quote(f"[[{spell.technique}-{spell.form}-Guidelines#Level {spell.base_level}]]")}'
-        )
-    elif spell.base_level == "General":
-        lines.append(
-            f'guideline: {yaml_quote(f"[[{spell.technique}-{spell.form}-Guidelines#Level General]]")}'
-        )
-    else:
-        lines.append(
-            f'guideline: {yaml_quote(f"[[{spell.technique}-{spell.form}-Guidelines]]")}'
-        )
-
-    # Aliases
-    lines.append("aliases:")
-    for a in spell.aliases:
-        lines.append(f"  - {yaml_quote(a)}")
-
-    # Tags
-    lines.append("tags:")
-    for t in spell.tags:
-        lines.append(f"  - {yaml_quote(t)}")
-
-    lines.append("---")
-    return "\n".join(lines)
+    return dump_frontmatter({
+        "name": spell.name,
+        "category": spell.category,
+        "technique": spell.technique,
+        "form": spell.form,
+        "arts": spell.primary_arts,
+        "level": spell.level,
+        "technique_requisites": spell.technique_requisites,
+        "form_requisites": spell.form_requisites,
+        "range": spell.range,
+        "duration": spell.duration,
+        "target": spell.target,
+        "ritual": spell.ritual,
+        "base_level": spell.base_level,
+        "range_magnitude": spell.range_magnitude,
+        "duration_magnitude": spell.duration_magnitude,
+        "target_magnitude": spell.target_magnitude,
+        "additional_magnitudes": spell.additional_magnitudes,
+        "total_magnitudes": spell.total_magnitudes,
+        "guideline": spell.guideline_link,
+        "aliases": spell.aliases,
+        "tags": spell.tags,
+    })
 
 
 def format_spell_markdown(spell: SpellEntry) -> str:
@@ -585,21 +419,7 @@ def format_spell_markdown(spell: SpellEntry) -> str:
     reqs_list = spell.technique_requisites + spell.form_requisites
     req_line = f"\n> - **Req:** {', '.join(reqs_list)}" if reqs_list else ""
 
-    # Guideline anchor link
-    if isinstance(spell.base_level, int) and spell.base_level > 0:
-        guideline_display = f"[[{spell.technique}-{spell.form}-Guidelines#Level {spell.base_level}|{spell.technique} {spell.form} Base {spell.base_level}]]"
-    elif spell.base_level == "General":
-        guideline_display = f"[[{spell.technique}-{spell.form}-Guidelines#Level General|{spell.technique} {spell.form} Base General]]"
-    else:
-        guideline_display = f"[[{spell.technique}-{spell.form}-Guidelines|{spell.technique} {spell.form} Guidelines]]"
-
-    total_mags = (
-        spell.range_magnitude
-        + spell.duration_magnitude
-        + spell.target_magnitude
-        + spell.additional_magnitudes
-    )
-
+    total_mags = spell.total_magnitudes
     mag_breakdown = f"+{total_mags}" if total_mags >= 0 else str(total_mags)
     breakdown_parts = []
     if spell.range_magnitude:
@@ -612,67 +432,16 @@ def format_spell_markdown(spell: SpellEntry) -> str:
 
     breakdown_str = f" ({', '.join(breakdown_parts)})" if breakdown_parts else ""
 
-
     callout = (
         f"> [!metadata] **{spell.arts_shorthand} {level_disp}**{ritual_badge}\n"
         f"> - **R:** {spell.range}, **D:** {spell.duration}, **T:** {spell.target}{req_line}\n"
         f"> - **Base:** {spell.base_level} | **Total Magnitudes:** {mag_breakdown}{breakdown_str}\n"
-        f"> - **Guideline:** {guideline_display}"
+        f"> - **Guideline:** {spell.guideline_display_link}"
     )
 
     body = spell.body.strip()
 
     return f"{fm}\n\n# {spell.name}\n\n{callout}\n\n{body}\n"
-
-
-def format_guideline_frontmatter(section: GuidelineSection) -> str:
-    """Format YAML frontmatter for a Guideline note."""
-    lines = [
-        "---",
-        f"name: {yaml_quote(f'{section.technique} {section.form} Guidelines')}",
-        f"category: {yaml_quote(section.category)}",
-        f"technique: {yaml_quote(section.technique)}",
-        f"form: {yaml_quote(section.form)}",
-        f"arts: {yaml_quote(section.primary_arts)}",
-        "aliases:",
-    ]
-    for a in section.aliases:
-        lines.append(f"  - {yaml_quote(a)}")
-
-    lines.append("tags:")
-    for t in section.tags:
-        lines.append(f"  - {yaml_quote(t)}")
-
-    lines.append("---")
-    return "\n".join(lines)
-
-
-def format_guideline_markdown(section: GuidelineSection) -> str:
-    """Format full markdown document for a Technique + Form Guideline note."""
-    fm = format_guideline_frontmatter(section)
-    art_sh = section.primary_arts.lower()
-
-    lines = [fm, f"\n# {section.technique} {section.form} Guidelines\n"]
-
-    if section.intro_body:
-        lines.append(section.intro_body)
-        lines.append("")
-
-    for lvl_entry in section.guidelines_by_level:
-        lvl_str = str(lvl_entry.level)
-        lines.append(f"### Level {lvl_str}")
-        for idx, bullet in enumerate(lvl_entry.bullets, start=1):
-            block_id = f"^{art_sh}-{lvl_str.lower()}-{idx}"
-            lines.append(f"- {bullet} {block_id}")
-        lines.append("")
-
-    # Obsidian Bases view section
-    lines.append("---")
-    lines.append("\n## Known Spells\n")
-    lines.append(format_guideline_bases_block(section.technique, section.form))
-    lines.append("")
-
-    return "\n".join(lines)
 
 
 def export_spells(
@@ -700,22 +469,26 @@ def export_spells(
     return {"spells": len(spells)}
 
 
-def export_guidelines(
-    source_path: Path | str,
-    output_dir: Path | str,
-) -> dict[str, int]:
-    """Parse core rules and export 50 Technique+Form Guideline notes to output_dir/guidelines."""
-    source = Path(source_path)
-    target_root = Path(output_dir)
-
-    guidelines_dir = target_root / "guidelines"
-    guidelines_dir.mkdir(parents=True, exist_ok=True)
-
-    guidelines = extract_guidelines(source)
-
-    for g in guidelines:
-        file_path = guidelines_dir / g.filename
-        content = format_guideline_markdown(g)
-        file_path.write_text(content, encoding="utf-8")
-
-    return {"guidelines": len(guidelines)}
+__all__ = [
+    "DURATION_CANONICAL",
+    "FORMS",
+    "RANGE_CANONICAL",
+    "TARGET_CANONICAL",
+    "TECHNIQUES",
+    "calculate_magnitudes_and_base",
+    "clean_ocr_errors",
+    "export_guidelines",
+    "export_spells",
+    "extract_guidelines",
+    "extract_spells",
+    "format_guideline_frontmatter",
+    "format_guideline_markdown",
+    "format_spell_frontmatter",
+    "format_spell_markdown",
+    "parse_guidelines",
+    "parse_rdt_line",
+    "parse_requisites_line",
+    "parse_spells",
+    "spell_level_to_magnitude",
+    "yaml_quote",
+]

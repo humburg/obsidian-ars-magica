@@ -3,13 +3,14 @@
 
 from pathlib import Path
 
-from obsidian_ars_magica.models import GuidelineLevelEntry, GuidelineSection
-from obsidian_ars_magica.spells import (
+from obsidian_ars_magica.guidelines import (
     export_guidelines,
     extract_guidelines,
     format_guideline_frontmatter,
     format_guideline_markdown,
+    parse_guidelines,
 )
+from obsidian_ars_magica.models import GuidelineLevelEntry, GuidelineSection
 
 CORE_RULES_PATH = Path(
     "Ars-Magica-Open-License/reviewed/Ars Magica - Definitive Edition (Core Rules).md"
@@ -106,4 +107,31 @@ def test_export_guidelines(tmp_path):
 
     # Ensure standalone guidelines.base is not created per design
     assert not (tmp_path / "guidelines.base").exists()
+
+
+def test_parse_guidelines_in_memory():
+    text = """# Chapter 9: Spells
+
+### Creo Animal Guidelines
+
+Intro text.
+
+| Level | Creo Animal Guideline |
+| ----- | --------------------- |
+| 5 | • Create a tiny insect |
+
+### Creo Animal Spells
+
+# Chapter 10: Long Term Events
+"""
+    guidelines = parse_guidelines(text)
+    assert len(guidelines) == 1
+    sec = guidelines[0]
+    assert sec.technique == "Creo"
+    assert sec.form == "Animal"
+    assert sec.intro_body == "Intro text."
+    assert len(sec.guidelines_by_level) == 1
+    assert sec.guidelines_by_level[0].level == 5
+    assert sec.guidelines_by_level[0].bullets == ["Create a tiny insect"]
+
 
