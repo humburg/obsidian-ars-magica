@@ -14,6 +14,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   bundle-and-attach:
     name: Build & Attach Notes Bundle
@@ -21,12 +24,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
 
       - name: Set up Python 3.15
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.15"
           cache: "pip"
@@ -80,7 +83,7 @@ jobs:
             --clobber
 
       - name: Upload artifact to workflow run
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.bundle.outputs.archive_versioned }}
           path: ${{ steps.bundle.outputs.archive_versioned }}

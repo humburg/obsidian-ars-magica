@@ -28,12 +28,15 @@ def test_release_workflow_steps_configuration():
     """Verify key workflow steps: checkout with submodules, extract-all, zip, and gh upload."""
     content = Path(".github/workflows/release.yaml").read_text(encoding="utf-8")
 
-    # Checkout submodules
-    assert "actions/checkout@v4" in content
+    # Node 24 runner configuration
+    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in content
+
+    # Checkout submodules (Node 24)
+    assert "actions/checkout@v5" in content
     assert "submodules: true" in content
 
-    # Python setup
-    assert "actions/setup-python@v5" in content
+    # Python setup (Node 24)
+    assert "actions/setup-python@v7" in content
     assert 'python-version: "3.15"' in content
 
     # Execution of extract-all
@@ -50,6 +53,17 @@ def test_release_workflow_steps_configuration():
     assert "gh release upload" in content
     assert "--clobber" in content
 
-    # Workflow artifact upload
-    assert "actions/upload-artifact@v4" in content
+    # Workflow artifact upload (Node 24)
+    assert "actions/upload-artifact@v6" in content
+
+
+def test_ci_workflow_targets_node24():
+    """Verify CI workflow targets Node.js 24 and uses updated action versions."""
+    content = Path(".github/workflows/ci.yaml").read_text(encoding="utf-8")
+
+    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in content
+    assert "actions/checkout@v5" in content
+    assert "actions/setup-python@v7" in content
+    assert "actions/upload-artifact@v6" in content
+
 
