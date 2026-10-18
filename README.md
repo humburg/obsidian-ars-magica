@@ -36,6 +36,14 @@ The CLI provides dedicated extraction tools for individual systems as well as a 
 
 ## Prerequisites & Installation
 
+### Quick Start: Pre-built Release Bundles
+
+If you want the generated Obsidian vault notes and `.base` database files without running the Python tooling locally, pre-built zip archives are automatically bundled by GitHub Actions and attached to every GitHub Release:
+- `obsidian-ars-magica-notes-v<version>.zip`: Release-tagged archive.
+- `obsidian-ars-magica-notes.zip`: Stable release asset name.
+
+Simply download the zip file and extract it directly into your Obsidian vault folder.
+
 ### Requirements
 - **Python**: Requires Python **3.15** or higher (`>=3.15`). Tested with Python 3.15.
 - **Git Submodule**: The upstream rules text is maintained in the `Ars-Magica-Open-License` git submodule.

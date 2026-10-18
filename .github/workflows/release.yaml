@@ -1,0 +1,88 @@
+name: Release Notes Bundle
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to attach archive to (leave empty for latest published release)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  bundle-and-attach:
+    name: Build & Attach Notes Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Python 3.15
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.15"
+          cache: "pip"
+
+      - name: Install package and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Extract all notes
+        run: |
+          obsidian-ars-magica extract-all --output output
+
+      - name: Include licensing and attribution
+        run: |
+          cp LICENSE output/LICENSE.md
+          if [ -f "Ars-Magica-Open-License/LICENSE.md" ]; then
+            cp Ars-Magica-Open-License/LICENSE.md output/LICENSE-OPEN-LICENSE.md
+          fi
+
+      - name: Package zip archives
+        id: bundle
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release view --json tagName -q .tagName)
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+          ARCHIVE_VERSIONED="obsidian-ars-magica-notes-${TAG}.zip"
+          ARCHIVE_STATIC="obsidian-ars-magica-notes.zip"
+          echo "archive_versioned=${ARCHIVE_VERSIONED}" >> $GITHUB_OUTPUT
+          echo "archive_static=${ARCHIVE_STATIC}" >> $GITHUB_OUTPUT
+
+          cd output
+          zip -r "../${ARCHIVE_VERSIONED}" .
+          cp "../${ARCHIVE_VERSIONED}" "../${ARCHIVE_STATIC}"
+          cd ..
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attach archives to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.bundle.outputs.tag }}"
+          echo "Uploading archives to release ${TAG}..."
+          gh release upload "${TAG}" \
+            "${{ steps.bundle.outputs.archive_versioned }}" \
+            "${{ steps.bundle.outputs.archive_static }}" \
+            --clobber
+
+      - name: Upload artifact to workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.bundle.outputs.archive_versioned }}
+          path: ${{ steps.bundle.outputs.archive_versioned }}
+          retention-days: 14
+
